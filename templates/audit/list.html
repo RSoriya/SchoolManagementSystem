@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block main_overflow %}overflow-hidden{% endblock %}
+
+{% block content %}
+  <div class="page-list">
+    <div class="page-toolbar">
+      <form method="get" class="flex min-w-0 flex-1 flex-wrap gap-3">
+        <input type="search" name="q" value="{{ query }}" placeholder="ស្វែងរក សកម្មភាព អ្នកប្រើ ឬវត្ថុ" class="form-input max-w-md">
+        <select name="action" class="form-input max-w-xs">
+          <option value="">គ្រប់សកម្មភាព</option>
+          {% for value, label in actions %}
+            <option value="{{ value }}" {% if action == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        {% include "includes/per_page.html" %}
+        <button type="submit" class="btn-secondary">ស្វែងរក</button>
+      </form>
+    </div>
+
+    <div class="panel page-list-panel">
+      <div class="page-list-table">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>ពេលវេលា</th>
+              <th>អ្នកប្រើ</th>
+              <th>សកម្មភាព</th>
+              <th>សេចក្ដីសង្ខេប</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for event in events %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter0|add:events.start_index }}</td>
+                <td class="whitespace-nowrap">{{ event.created_at|date:"d/m/Y H:i" }}</td>
+                <td>{{ event.actor_name|default:"—" }}</td>
+                <td><span class="badge badge-transferred">{{ event.get_action_display }}</span></td>
+                <td>
+                  <p>{{ event.summary }}</p>
+                  {% if event.object_label %}
+                    <p class="text-xs text-slate-400">{{ event.object_label }}</p>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="py-16 text-center text-slate-400">មិនទាន់មាន Audit Log។</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "includes/pagination.html" with page=events extra_query=extra_query %}
+    </div>
+  </div>
+{% endblock %}

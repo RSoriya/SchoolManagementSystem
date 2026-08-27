@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="panel mb-6 flex flex-wrap items-start justify-between gap-3 p-6">
+    <div>
+      <p class="text-sm font-semibold text-brand-700">{{ course.get_fee_type_display }} · {{ course.currency }} {{ course.default_fee }}</p>
+      <h2 class="text-2xl font-bold text-slate-900">{{ course.name }}</h2>
+      {% if course.name_kh %}<p class="text-sm text-slate-500">{{ course.name_kh }}</p>{% endif %}
+    </div>
+    <div class="flex gap-2">
+      <a href="{% url 'academics:class_list' %}?open=add&course={{ course.pk }}" class="btn-primary">+ បន្ថែមថ្នាក់</a>
+      <a href="{% url 'academics:course_list' %}?edit={{ course.pk }}" class="btn-secondary">កែវគ្គ</a>
+    </div>
+  </div>
+
+  {% if course.description %}
+    <p class="mb-6 max-w-3xl text-sm leading-7 text-slate-600">{{ course.description }}</p>
+  {% endif %}
+
+  <section class="panel overflow-hidden">
+    <div class="border-b border-slate-100 px-5 py-4">
+      <h3 class="font-bold text-slate-900">ថ្នាក់ក្នុងវគ្គនេះ</h3>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="w-16">ល.រ</th>
+            <th>ថ្នាក់</th>
+            <th>គ្រូ</th>
+            <th>កាលវិភាគ</th>
+            <th>សិស្សកំពុងរៀន</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for class in classes %}
+            <tr>
+              <td class="text-slate-400">{{ forloop.counter }}</td>
+              <td><a href="{{ class.get_absolute_url }}" class="font-semibold hover:text-brand-700">{{ class.name }}</a></td>
+              <td>{{ class.instructor_name|default:"—" }}</td>
+              <td>{{ class.study_days_display }} · {{ class.study_time_display }}</td>
+              <td>{{ class.active_students }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="py-10 text-center text-slate-500">មិនទាន់មានថ្នាក់។</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

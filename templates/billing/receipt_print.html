@@ -1,0 +1,40 @@
+{% load static %}
+<!doctype html>
+<html lang="km">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ receipt.receipt_number }} · {{ receipt.school_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&family=Noto+Sans+Khmer:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <style>
+    @page { size: A4 portrait; margin: 12mm; }
+    @media print {
+      html, body { background: white !important; }
+      .no-print { display: none !important; }
+      .receipt-sheet { box-shadow: none !important; margin: 0 !important; width: auto; min-height: auto; }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-canvas font-sans text-slate-800">
+  <div class="no-print mx-auto flex max-w-[210mm] flex-wrap items-center justify-between gap-3 px-4 py-4">
+    <a href="{{ receipt.get_absolute_url }}" class="btn-secondary">← ការបង់ប្រាក់</a>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="btn-primary" onclick="window.print()">បោះពុម្ព</button>
+      <button type="button" class="btn-secondary" onclick="window.print()">បោះពុម្ពម្ដងទៀត</button>
+      <a href="{% url 'billing:receipt_pdf' receipt.pk %}" class="btn-secondary">ទាញយក PDF</a>
+    </div>
+  </div>
+  {% include "includes/messages.html" %}
+
+  <div class="mx-auto mb-10 w-full max-w-[210mm] overflow-hidden rounded-sm bg-white shadow-sm">
+    {% include "billing/includes/receipt_sheet.html" with compact=False %}
+  </div>
+
+  {% if auto_print %}
+    <script>window.addEventListener("load", () => window.print());</script>
+  {% endif %}
+</body>
+</html>

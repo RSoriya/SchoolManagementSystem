@@ -1,0 +1,87 @@
+<article class="receipt-sheet relative bg-white {% if compact %}p-5 sm:p-6{% else %}min-h-[297mm] p-8 sm:p-10{% endif %}">
+  {% if receipt.is_voided %}
+    <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+      <span class="rotate-[-18deg] rounded-xl border-4 border-red-500 px-8 py-3 text-4xl font-bold text-red-500/70">បានលុបចោល</span>
+    </div>
+  {% endif %}
+
+  <header class="flex items-start justify-between gap-4 border-b border-slate-200 pb-5">
+    <div class="flex items-start gap-4">
+      {% if school.logo %}
+        <img src="{{ school.logo.url }}" alt="" class="size-16 rounded-2xl object-cover">
+      {% else %}
+        <span class="flex size-16 items-center justify-center rounded-2xl bg-brand-50 text-2xl font-bold text-brand-700">S</span>
+      {% endif %}
+      <div>
+        <h1 class="text-xl font-bold text-slate-900">{{ receipt.school_name }}</h1>
+        {% if receipt.school_address %}<p class="mt-1 text-sm text-slate-500">{{ receipt.school_address }}</p>{% endif %}
+        {% if receipt.school_phone %}<p class="text-sm text-slate-500">ទូរសព្ទ៖ {{ receipt.school_phone }}</p>{% endif %}
+      </div>
+    </div>
+    <div class="text-right">
+      <p class="text-sm font-semibold text-brand-700">បង្កាន់ដៃបង់ថ្លៃសិក្សា</p>
+      <p class="mt-1 text-lg font-bold text-slate-900">{{ receipt.receipt_number }}</p>
+      <p class="text-sm text-slate-500">{{ payment.paid_on|date:"d/m/Y" }}</p>
+    </div>
+  </header>
+
+  <section class="mt-6 grid gap-3 text-sm sm:grid-cols-2">
+    <p><span class="text-slate-500">លេខសម្គាល់សិស្ស៖</span> <strong>{{ receipt.student_id_snapshot }}</strong></p>
+    <p><span class="text-slate-500">ឈ្មោះសិស្ស៖</span> <strong>{{ receipt.student_name_kh }}</strong>{% if receipt.student_name_en %} <span class="text-slate-500">({{ receipt.student_name_en }})</span>{% endif %}</p>
+    <p><span class="text-slate-500">វគ្គសិក្សា៖</span> <strong>{{ receipt.course_name }}</strong></p>
+    <p><span class="text-slate-500">ថ្នាក់៖</span> <strong>{{ receipt.class_name }}</strong></p>
+    <p><span class="text-slate-500">រយៈពេល៖</span> <strong>{{ payment.period_label|default:payment.get_period_type_display }}</strong></p>
+    <p><span class="text-slate-500">ថ្ងៃសិក្សា៖</span>
+      <strong>
+        {% if payment.period_start %}{{ payment.period_start|date:"d/m/Y" }}{% endif %}
+        {% if payment.period_start and payment.period_end %} – {% endif %}
+        {% if payment.period_end %}{{ payment.period_end|date:"d/m/Y" }}{% endif %}
+        {% if not payment.period_start and not payment.period_end %}—{% endif %}
+      </strong>
+    </p>
+  </section>
+
+  <table class="mt-6 w-full text-sm">
+    <thead>
+      <tr class="border-y border-slate-200 bg-slate-50 text-left">
+        <th class="px-3 py-2.5 font-semibold text-slate-600">ពិពណ៌នា</th>
+        <th class="px-3 py-2.5 text-right font-semibold text-slate-600">ចំនួន</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in payment.line_items %}
+        <tr class="border-b border-slate-100">
+          <td class="px-3 py-2.5">{{ item.label }}</td>
+          <td class="px-3 py-2.5 text-right {% if item.negative %}text-red-600{% endif %}">{{ item.display }}</td>
+        </tr>
+      {% endfor %}
+      <tr>
+        <td class="px-3 py-3 text-base font-bold">សរុប ({{ payment.currency }})</td>
+        <td class="px-3 py-3 text-right text-lg font-bold">{{ payment.total_display }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <section class="mt-5 grid gap-2 text-sm sm:grid-cols-2">
+    <p><span class="text-slate-500">វិធីបង់ប្រាក់៖</span> <strong>{{ payment.method.name }}</strong></p>
+    {% if payment.transaction_reference %}
+      <p><span class="text-slate-500">លេខយោង៖</span> <strong>{{ payment.transaction_reference }}</strong></p>
+    {% endif %}
+    <p><span class="text-slate-500">អ្នកទទួល៖</span> <strong>{{ receipt.issued_by_name|default:"—" }}</strong></p>
+    {% if payment.next_due_date %}
+      <p><span class="text-slate-500">Due Date បន្ទាប់៖</span> <strong>{{ payment.next_due_date|date:"d/m/Y" }}</strong></p>
+    {% endif %}
+  </section>
+
+  <section class="mt-16 grid grid-cols-2 gap-10 text-center text-sm">
+    <div>
+      <div class="mx-auto mb-2 h-16 w-40 border-b border-slate-400"></div>
+      <p class="font-semibold">ហត្ថលេខាអ្នកទទួលប្រាក់</p>
+      <p class="text-slate-500">{{ receipt.issued_by_name }}</p>
+    </div>
+    <div>
+      <div class="mx-auto mb-2 h-16 w-40 border-b border-slate-400"></div>
+      <p class="font-semibold">ហត្ថលេខាអាណាព្យាបាល / សិស្ស</p>
+    </div>
+  </section>
+</article>

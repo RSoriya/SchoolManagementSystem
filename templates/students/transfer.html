@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="mx-auto max-w-xl">
+    <p class="text-sm text-slate-500">{{ student.student_id }} · {{ student.name_kh }}</p>
+    <h2 class="mt-1 text-xl font-bold text-slate-900">ផ្ទេរពី {{ enrollment.course_class.name }}</h2>
+    <p class="mt-2 text-sm text-slate-500">ការចុះឈ្មោះចាស់នឹងប្ដូរទៅស្ថានភាព «ផ្ទេរ» ហើយរក្សាទុកក្នុងប្រវត្តិ។</p>
+
+    <form method="post" class="panel mt-6 space-y-4 p-6">
+      {% csrf_token %}
+      <div>
+        <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.course_class.id_for_label }}">{{ form.course_class.label }}</label>
+        {{ form.course_class }}
+        {% for error in form.course_class.errors %}<p class="mt-1.5 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      <div>
+        <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
+        {{ form.note }}
+      </div>
+      <div class="flex gap-3">
+        <button type="submit" class="btn-primary">ផ្ទេរថ្នាក់</button>
+        <a href="{{ student.get_absolute_url }}" class="btn-secondary">បោះបង់</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

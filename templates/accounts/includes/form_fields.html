@@ -1,0 +1,35 @@
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+            {{ form.username }}
+            {% for error in form.username.errors %}<p class="mt-1.5 text-xs text-red-600">{{ error }}</p>{% endfor %}
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.full_name_kh.id_for_label }}">{{ form.full_name_kh.label }}</label>
+            {{ form.full_name_kh }}
+            {% for error in form.full_name_kh.errors %}<p class="mt-1.5 text-xs text-red-600">{{ error }}</p>{% endfor %}
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
+            {{ form.phone_number }}
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+            {{ form.email }}
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+            {{ form.password1 }}
+            {% for error in form.password1.errors %}<p class="mt-1.5 text-xs text-red-600">{{ error }}</p>{% endfor %}
+            <p class="mt-1 text-xs text-slate-400">ពេលកែ ទុកចោលប្រសិនបើមិនចង់ផ្លាស់ប្ដូរ។</p>
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+            {{ form.password2 }}
+            {% for error in form.password2.errors %}<p class="mt-1.5 text-xs text-red-600">{{ error }}</p>{% endfor %}
+          </div>
+          <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+            {{ form.is_active }} កំពុងប្រើ
+          </label>
+          {% if form.non_field_errors %}
+            <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ form.non_field_errors.0 }}</div>
+          {% endif %}

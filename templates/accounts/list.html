@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block main_overflow %}overflow-hidden{% endblock %}
+
+{% block content %}
+  <div
+    data-resource-modals
+    class="page-list"
+    data-create-url="{{ create_url }}"
+    data-add-title="បន្ថែមអ្នកប្រើ"
+    data-edit-title="កែអ្នកប្រើប្រាស់"
+    {% if open_form_modal %}data-open-modal="form"{% endif %}
+  >
+    {{ payloads|json_script:"user-payloads" }}
+
+    <div class="page-toolbar">
+      <form method="get" class="flex min-w-0 flex-1 flex-wrap gap-3">
+        <input type="search" name="q" value="{{ query }}" placeholder="ស្វែងរក ឈ្មោះ ឬទូរសព្ទ" class="form-input max-w-md">
+        {% include "includes/per_page.html" %}
+        <button type="submit" class="btn-secondary">ស្វែងរក</button>
+      </form>
+      <button type="button" class="btn-primary" data-add-open>+ បន្ថែមអ្នកប្រើ</button>
+    </div>
+
+    <p class="mb-4 shrink-0 text-sm text-slate-500">V1 មានតួនាទី Admin តែប៉ុណ្ណោះ។ ផ្អាកគណនី មិនលុបប្រវត្តិ។</p>
+
+    <div class="panel page-list-panel">
+      <div class="page-list-table">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>ឈ្មោះ</th>
+              <th>អ្នកប្រើ</th>
+              <th>ទូរសព្ទ</th>
+              <th>ស្ថានភាព</th>
+              <th class="text-right">សកម្មភាព</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for account in users %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter0|add:users.start_index }}</td>
+                <td class="font-semibold">{{ account.full_name_kh|default:account.username }}</td>
+                <td>{{ account.username }}</td>
+                <td>{{ account.phone_number|default:"—" }}</td>
+                <td>
+                  {% if account.is_active %}
+                    <span class="badge badge-active">សកម្ម</span>
+                  {% else %}
+                    <span class="badge badge-dropped">ផ្អាកគណនី</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="flex justify-end gap-2">
+                    <button type="button" class="btn-quiet" data-edit-id="{{ account.pk }}">កែ</button>
+                    {% if account.is_active and account.pk != current_user_id %}
+                      <button type="button" class="btn-danger" data-delete-id="{{ account.pk }}">ផ្អាក</button>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="py-16 text-center text-slate-400">មិនមានអ្នកប្រើ។</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "includes/pagination.html" with page=users extra_query=extra_query %}
+    </div>
+
+    <div data-modal="form-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-lg">
+        <div class="mb-5 flex items-start justify-between gap-3">
+          <h2 class="text-xl font-bold text-slate-900" data-form-title>បន្ថែមអ្នកប្រើ</h2>
+          <button type="button" class="btn-quiet" data-modal-close aria-label="បិទ">✕</button>
+        </div>
+        <form method="post" action="{{ create_url }}" data-resource-form novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="from_modal" value="1">
+          <div class="grid gap-5 sm:grid-cols-2">
+            {% include "accounts/includes/form_fields.html" %}
+          </div>
+          <div class="mt-6 flex gap-3">
+            <button type="submit" class="btn-primary">រក្សាទុក</button>
+            <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div data-modal="delete-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-md text-center">
+        <h2 class="text-xl font-bold text-slate-900">ផ្អាកគណនី</h2>
+        <p class="mt-3 text-slate-600">តើអ្នកពិតជាចង់ផ្អាក <strong data-delete-name></strong> មែនទេ? ប្រវត្តិនៅតែរក្សាទុក។</p>
+        <form method="post" class="mt-6 flex justify-center gap-3" data-delete-form>
+          {% csrf_token %}
+          <button type="submit" class="btn-danger px-4 py-2.5 text-base">ផ្អាក</button>
+          <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

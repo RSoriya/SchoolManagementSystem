@@ -1,0 +1,24 @@
+<div data-modal="receipt-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="receipt-modal-title">
+  <div class="modal-backdrop" data-modal-close></div>
+  <div class="modal-panel modal-panel-xl">
+    <div class="no-print mb-4 flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h2 id="receipt-modal-title" class="text-xl font-bold text-slate-900">បង្កាន់ដៃ</h2>
+        {% if view_receipt %}<p class="text-sm text-slate-500">{{ view_receipt.receipt_number }}</p>{% endif %}
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button" class="btn-primary" data-receipt-print>បោះពុម្ព</button>
+        <button type="button" class="btn-secondary" data-receipt-print>បោះពុម្ពម្ដងទៀត</button>
+        {% if view_receipt %}
+          <a href="{% url 'billing:receipt_pdf' view_receipt.pk %}" class="btn-secondary">ទាញយក PDF</a>
+        {% endif %}
+        <button type="button" class="btn-quiet" data-modal-close aria-label="បិទ">✕</button>
+      </div>
+    </div>
+    <div class="rounded-2xl border border-slate-100 bg-slate-50 print:border-0 print:bg-white">
+      {% if view_receipt %}
+        {% include "billing/includes/receipt_sheet.html" with receipt=view_receipt payment=view_receipt.payment compact=True %}
+      {% endif %}
+    </div>
+  </div>
+</div>

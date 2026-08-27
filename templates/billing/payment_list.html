@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block main_overflow %}overflow-hidden{% endblock %}
+
+{% block content %}
+  <div
+    data-resource-modals
+    class="page-list"
+    {% if open_receipt_modal %}data-open-modal="receipt"{% endif %}
+  >
+    {{ payloads|json_script:"payment-payloads" }}
+
+    <div class="page-toolbar">
+      <form method="get" class="flex min-w-0 flex-1 flex-wrap gap-3">
+        <input type="search" name="q" value="{{ query }}" placeholder="ស្វែងរក បង្កាន់ដៃ សិស្ស ឬថ្នាក់" class="form-input max-w-md">
+        <select name="status" class="form-input max-w-xs">
+          <option value="">គ្រប់ស្ថានភាព</option>
+          <option value="completed" {% if status == "completed" %}selected{% endif %}>បានបង់</option>
+          <option value="voided" {% if status == "voided" %}selected{% endif %}>បានលុបចោល</option>
+          <option value="refunded" {% if status == "refunded" %}selected{% endif %}>បានសងប្រាក់</option>
+        </select>
+        {% include "includes/per_page.html" %}
+        <button type="submit" class="btn-secondary">ស្វែងរក</button>
+      </form>
+      <a href="{% url 'billing:payment_create' %}" class="btn-primary">+ ទទួលបង់ប្រាក់</a>
+    </div>
+
+    <div class="panel page-list-panel">
+      <div class="page-list-table">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>ថ្ងៃបង់</th>
+              <th>សិស្ស</th>
+              <th>ថ្នាក់</th>
+              <th>សរុប</th>
+              <th>វិធីបង់</th>
+              <th>បង្កាន់ដៃ</th>
+              <th>ស្ថានភាព</th>
+              <th class="text-right">សកម្មភាព</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for payment in payments %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter0|add:payments.start_index }}</td>
+                <td>{{ payment.paid_on|date:"d/m/Y" }}</td>
+                <td>
+                  <a href="{{ payment.student.get_absolute_url }}" class="font-semibold text-slate-900 hover:text-brand-700">{{ payment.student.name_kh }}</a>
+                  <p class="text-xs text-slate-400">{{ payment.student.student_id }}</p>
+                </td>
+                <td>{{ payment.course_class.name }}</td>
+                <td class="font-semibold">{{ payment.total_display }}</td>
+                <td>{{ payment.method.name }}</td>
+                <td>
+                  {% if payment.receipt %}
+                    <a href="{{ payment.receipt.get_absolute_url }}" class="font-medium text-brand-700 hover:underline">{{ payment.receipt.receipt_number }}</a>
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td>
+                  {% if payment.is_voided %}
+                    <span class="badge badge-voided">បានលុបចោល</span>
+                  {% elif payment.is_refunded %}
+                    <span class="badge badge-refunded">បានសងប្រាក់</span>
+                  {% else %}
+                    <span class="badge badge-issued">បានបង់</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="flex justify-end gap-2">
+                    {% if payment.receipt %}
+                      <a href="{{ payment.receipt.get_absolute_url }}" class="btn-quiet">បង្កាន់ដៃ</a>
+                    {% endif %}
+                    {% if payment.status == "completed" %}
+                      <button type="button" class="btn-secondary px-3 py-1.5 text-sm" data-refund-id="{{ payment.pk }}">សងប្រាក់</button>
+                      <button type="button" class="btn-danger" data-void-id="{{ payment.pk }}">លុបចោល</button>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="9" class="py-16 text-center text-slate-400">មិនទាន់មានការបង់ប្រាក់។</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "includes/pagination.html" with page=payments extra_query=extra_query %}
+    </div>
+
+    {% include "billing/includes/receipt_modal.html" %}
+
+    <div data-modal="void-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-md text-center">
+        <h2 class="text-xl font-bold text-slate-900">លុបចោលការបង់ប្រាក់</h2>
+        <p class="mt-3 text-slate-600">តើអ្នកពិតជាចង់លុបចោល <strong data-void-name></strong> មែនទេ? កំណត់ត្រាដើមនឹងនៅតែរក្សាទុក។</p>
+        <form method="post" class="mt-6 flex justify-center gap-3" data-void-form>
+          {% csrf_token %}
+          <button type="submit" class="btn-danger px-4 py-2.5 text-base">លុបចោល</button>
+          <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+        </form>
+      </div>
+    </div>
+
+    <div data-modal="refund-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-md text-center">
+        <h2 class="text-xl font-bold text-slate-900">សងប្រាក់ពេញ</h2>
+        <p class="mt-3 text-slate-600">សង <strong data-refund-amount></strong> សម្រាប់ <strong data-refund-name></strong>។ កំណត់ត្រាបង់ដើមនឹងនៅតែរក្សាទុក។ មិនអនុញ្ញាតសងផ្នែកខ្លះ។</p>
+        <form method="post" class="mt-6 space-y-4 text-left" data-refund-form>
+          {% csrf_token %}
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ refund_form.method.id_for_label }}">{{ refund_form.method.label }}</label>
+            {{ refund_form.method }}
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ refund_form.refunded_on.id_for_label }}">{{ refund_form.refunded_on.label }}</label>
+            {{ refund_form.refunded_on }}
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ refund_form.reason.id_for_label }}">{{ refund_form.reason.label }}</label>
+            {{ refund_form.reason }}
+          </div>
+          <div class="flex justify-center gap-3 pt-2">
+            <button type="submit" class="btn-primary">សងប្រាក់</button>
+            <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

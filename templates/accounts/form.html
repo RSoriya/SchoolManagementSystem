@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <form method="post" class="mx-auto max-w-3xl space-y-6" novalidate>
+    {% csrf_token %}
+    <section class="panel p-6">
+      <div class="grid gap-5 sm:grid-cols-2">
+        {% include "accounts/includes/form_fields.html" %}
+      </div>
+    </section>
+    <div class="flex gap-3">
+      <button type="submit" class="btn-primary">រក្សាទុក</button>
+      <a href="{% url 'users:list' %}" class="btn-secondary">បោះបង់</a>
+    </div>
+  </form>
+{% endblock %}

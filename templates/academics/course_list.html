@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block main_overflow %}overflow-hidden{% endblock %}
+
+{% block content %}
+  <div
+    data-resource-modals
+    class="page-list"
+    data-create-url="{{ create_url }}"
+    data-add-title="បន្ថែមវគ្គសិក្សា"
+    data-edit-title="កែវគ្គសិក្សា"
+    {% if open_form_modal %}data-open-modal="form"{% endif %}
+  >
+    {{ payloads|json_script:"course-payloads" }}
+
+    <div class="page-toolbar">
+      <form method="get" class="flex min-w-0 flex-1 flex-wrap gap-3">
+        <input type="search" name="q" value="{{ query }}" placeholder="ស្វែងរកវគ្គសិក្សា" class="form-input max-w-md">
+        {% include "includes/per_page.html" %}
+        <button type="submit" class="btn-secondary">ស្វែងរក</button>
+      </form>
+      <button type="button" class="btn-primary" data-add-open>+ បន្ថែមវគ្គ</button>
+    </div>
+
+    <div class="panel page-list-panel">
+      <div class="page-list-table">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>វគ្គសិក្សា</th>
+              <th>ប្រភេទថ្លៃ</th>
+              <th>ថ្លៃសិក្សា</th>
+              <th>ថ្នាក់</th>
+              <th>ស្ថានភាព</th>
+              <th class="text-right">សកម្មភាព</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for course in courses %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter0|add:courses.start_index }}</td>
+                <td>
+                  <a href="{{ course.get_absolute_url }}" class="font-semibold text-slate-900 hover:text-brand-700">{{ course.name }}</a>
+                  {% if course.name_kh %}<p class="text-sm text-slate-400">{{ course.name_kh }}</p>{% endif %}
+                </td>
+                <td>{{ course.get_fee_type_display }}</td>
+                <td class="font-semibold">{{ course.currency }} {{ course.default_fee }}</td>
+                <td>{{ course.class_count }}</td>
+                <td>
+                  {% if course.is_active %}
+                    <span class="badge badge-active">សកម្ម</span>
+                  {% else %}
+                    <span class="badge badge-dropped">បិទ</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="flex justify-end gap-2">
+                    <button type="button" class="btn-quiet" data-edit-id="{{ course.pk }}">កែ</button>
+                    <button type="button" class="btn-danger" data-delete-id="{{ course.pk }}">លុប</button>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="py-16 text-center text-slate-400">មិនទាន់មានវគ្គសិក្សា។</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "includes/pagination.html" with page=courses extra_query=extra_query %}
+    </div>
+
+    <div data-modal="form-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-lg">
+        <div class="mb-5 flex items-start justify-between gap-3">
+          <h2 class="text-xl font-bold text-slate-900" data-form-title>បន្ថែមវគ្គសិក្សា</h2>
+          <button type="button" class="btn-quiet" data-modal-close aria-label="បិទ">✕</button>
+        </div>
+        <form method="post" action="{{ create_url }}" class="grid gap-5 sm:grid-cols-2" data-resource-form novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="from_modal" value="1">
+          {% include "academics/includes/course_form_fields.html" %}
+          <div class="flex gap-3 sm:col-span-2">
+            <button type="submit" class="btn-primary">រក្សាទុក</button>
+            <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div data-modal="delete-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-md text-center">
+        <h2 class="text-xl font-bold text-slate-900">លុបវគ្គសិក្សា</h2>
+        <p class="mt-3 text-slate-600">តើអ្នកពិតជាចង់លុប <strong data-delete-name></strong> មែនទេ?</p>
+        <form method="post" class="mt-6 flex justify-center gap-3" data-delete-form>
+          {% csrf_token %}
+          <button type="submit" class="btn-danger px-4 py-2.5 text-base">លុប</button>
+          <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

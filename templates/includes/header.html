@@ -1,0 +1,33 @@
+<header class="z-30 shrink-0 border-b border-slate-200/80 bg-white no-print">
+  <div class="flex h-[4.5rem] items-center gap-4 px-4 sm:px-6 lg:px-8">
+    <button data-sidebar-open type="button" class="rounded-2xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50 lg:hidden" aria-label="បើកម៉ឺនុយ">
+      <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+
+    <div class="min-w-0 flex-1">
+      <p class="truncate text-sm font-medium text-slate-400">ប្រព័ន្ធគ្រប់គ្រងសាលារៀន</p>
+      <h1 class="truncate text-xl font-bold text-slate-900">{{ page_title|default:"ផ្ទាំងគ្រប់គ្រង" }}</h1>
+    </div>
+
+    <a href="{% url 'dashboard:index' %}#due-alerts" class="relative rounded-2xl border border-slate-200 bg-white p-2.5 text-slate-600 hover:bg-slate-50" aria-label="ការជូនដំណឹង">
+      <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+      {% if alert_count %}
+        <span class="absolute right-1.5 top-1.5 min-w-4 rounded-full bg-amber-400 px-1 text-center text-[10px] font-bold leading-4 text-amber-950">{{ alert_count }}</span>
+      {% endif %}
+    </a>
+
+    <div class="hidden items-center gap-3 sm:flex">
+      <span class="flex size-10 items-center justify-center rounded-2xl bg-brand-50 text-sm font-bold text-brand-700">
+        {{ request.user.username|first|upper }}
+      </span>
+      <div class="max-w-40">
+        <p class="truncate text-sm font-semibold text-slate-900">{{ request.user }}</p>
+        <p class="text-xs text-slate-400">Admin</p>
+      </div>
+      <form method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="rounded-xl px-2.5 py-1.5 text-sm font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-800">ចាកចេញ</button>
+      </form>
+    </div>
+  </div>
+</header>

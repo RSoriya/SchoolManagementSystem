@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block main_overflow %}overflow-hidden{% endblock %}
+
+{% block content %}
+  <div
+    data-resource-modals
+    class="page-list"
+    data-create-url="{{ create_url }}"
+    data-add-title="បន្ថែមសិស្ស"
+    data-edit-title="កែព័ត៌មានសិស្ស"
+    {% if open_form_modal %}data-open-modal="form"{% endif %}
+  >
+    {{ payloads|json_script:"student-payloads" }}
+
+    <div class="page-toolbar">
+      <form method="get" class="flex min-w-0 flex-1 flex-wrap gap-3">
+        <input type="search" name="q" value="{{ query }}" placeholder="ស្វែងរក លេខសម្គាល់ ឈ្មោះ ឬទូរសព្ទ" class="form-input max-w-md">
+        <select name="class" class="form-input max-w-xs">
+          <option value="">គ្រប់ថ្នាក់</option>
+          {% for class in classes %}
+            <option value="{{ class.pk }}" {% if class_id == class.pk|stringformat:"s" %}selected{% endif %}>{{ class.name }}</option>
+          {% endfor %}
+        </select>
+        {% include "includes/per_page.html" %}
+        <button type="submit" class="btn-secondary">ស្វែងរក</button>
+      </form>
+      <button type="button" class="btn-primary" data-add-open>+ បន្ថែមសិស្ស</button>
+    </div>
+
+    <div class="panel page-list-panel">
+      <div class="page-list-table">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>សិស្ស</th>
+              <th>លេខសម្គាល់</th>
+              <th>ទូរសព្ទ</th>
+              <th>ភេទ</th>
+              <th>ស្ថានភាព</th>
+              <th class="text-right">សកម្មភាព</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in students %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter0|add:students.start_index }}</td>
+                <td>
+                  <a href="{{ student.get_absolute_url }}" class="flex items-center gap-3 font-semibold text-slate-900 hover:text-brand-700">
+                    {% if student.photo %}
+                      <img src="{{ student.photo.url }}" alt="" class="size-11 rounded-2xl object-cover">
+                    {% else %}
+                      <span class="flex size-11 items-center justify-center rounded-2xl bg-brand-50 text-brand-700">{{ student.initials }}</span>
+                    {% endif %}
+                    <span>
+                      <span class="block">{{ student.name_kh }}</span>
+                      <span class="block text-sm font-normal text-slate-400">{{ student.name_en }}</span>
+                    </span>
+                  </a>
+                </td>
+                <td class="font-medium text-slate-500">{{ student.student_id }}</td>
+                <td>{{ student.phone }}</td>
+                <td>{{ student.get_gender_display }}</td>
+                <td>
+                  {% if student.is_active %}
+                    <span class="badge badge-active">សកម្ម</span>
+                  {% else %}
+                    <span class="badge badge-dropped">ផ្អាកគណនី</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="flex justify-end gap-2">
+                    <button type="button" class="btn-quiet" data-edit-id="{{ student.pk }}">កែ</button>
+                    <button type="button" class="btn-danger" data-delete-id="{{ student.pk }}">លុប</button>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="py-16 text-center text-slate-400">មិនមានសិស្សត្រូវនឹងការស្វែងរក។</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "includes/pagination.html" with page=students extra_query=extra_query %}
+    </div>
+
+    <div data-modal="form-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-lg">
+        <div class="mb-5 flex items-start justify-between gap-3">
+          <h2 class="text-xl font-bold text-slate-900" data-form-title>បន្ថែមសិស្ស</h2>
+          <button type="button" class="btn-quiet" data-modal-close aria-label="បិទ">✕</button>
+        </div>
+        <form method="post" action="{{ create_url }}" enctype="multipart/form-data" data-resource-form novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="from_modal" value="1">
+          {% include "students/includes/form_fields.html" %}
+          <div class="mt-6 flex gap-3">
+            <button type="submit" class="btn-primary">រក្សាទុក</button>
+            <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div data-modal="delete-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-md text-center">
+        <h2 class="text-xl font-bold text-slate-900">លុបសិស្ស</h2>
+        <p class="mt-3 text-slate-600">តើអ្នកពិតជាចង់លុប <strong data-delete-name></strong> មែនទេ?</p>
+        <form method="post" class="mt-6 flex justify-center gap-3" data-delete-form>
+          {% csrf_token %}
+          <button type="submit" class="btn-danger px-4 py-2.5 text-base">លុប</button>
+          <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block main_overflow %}overflow-hidden{% endblock %}
+
+{% block content %}
+  <div
+    data-resource-modals
+    class="page-list"
+    data-create-url="{{ create_url }}"
+    data-add-title="បន្ថែមថ្នាក់រៀន"
+    data-edit-title="កែថ្នាក់រៀន"
+    {% if open_form_modal %}data-open-modal="form"{% endif %}
+  >
+    {{ payloads|json_script:"class-payloads" }}
+
+    <div class="page-toolbar">
+      <form method="get" class="flex min-w-0 flex-1 flex-wrap gap-3">
+        <input type="search" name="q" value="{{ query }}" placeholder="ស្វែងរកថ្នាក់ ឬគ្រូ" class="form-input max-w-md">
+        <select name="course" class="form-input max-w-xs">
+          <option value="">គ្រប់វគ្គ</option>
+          {% for course in courses %}
+            <option value="{{ course.pk }}" {% if course_id == course.pk|stringformat:"s" %}selected{% endif %}>{{ course.name }}</option>
+          {% endfor %}
+        </select>
+        {% include "includes/per_page.html" %}
+        <button type="submit" class="btn-secondary">ស្វែងរក</button>
+      </form>
+      <button type="button" class="btn-primary" data-add-open {% if course_id %}data-course="{{ course_id }}"{% endif %}>+ បន្ថែមថ្នាក់</button>
+    </div>
+
+    <div class="panel page-list-panel">
+      <div class="page-list-table">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>ថ្នាក់</th>
+              <th>វគ្គ</th>
+              <th>គ្រូ</th>
+              <th>ថ្ងៃ / ម៉ោង</th>
+              <th>សិស្ស</th>
+              <th class="text-right">សកម្មភាព</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for class in classes %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter0|add:classes.start_index }}</td>
+                <td><a href="{{ class.get_absolute_url }}" class="font-semibold hover:text-brand-700">{{ class.name }}</a></td>
+                <td>{{ class.course.name }}</td>
+                <td>{{ class.instructor_name|default:"—" }}</td>
+                <td class="text-slate-500">{{ class.study_days_display }} · {{ class.study_time_display }}</td>
+                <td><span class="badge badge-active">{{ class.active_students }} នាក់</span></td>
+                <td>
+                  <div class="flex justify-end gap-2">
+                    <button type="button" class="btn-quiet" data-edit-id="{{ class.pk }}">កែ</button>
+                    <button type="button" class="btn-danger" data-delete-id="{{ class.pk }}">លុប</button>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="py-16 text-center text-slate-400">មិនទាន់មានថ្នាក់រៀន។</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "includes/pagination.html" with page=classes extra_query=extra_query %}
+    </div>
+
+    <div data-modal="form-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="class-form-title">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-lg">
+        <div class="mb-5 flex items-start justify-between gap-3">
+          <h2 id="class-form-title" class="text-xl font-bold text-slate-900" data-form-title>បន្ថែមថ្នាក់រៀន</h2>
+          <button type="button" class="btn-quiet" data-modal-close aria-label="បិទ">✕</button>
+        </div>
+        <form method="post" action="{{ create_url }}" class="grid gap-5 sm:grid-cols-2" data-resource-form novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="from_modal" value="1">
+          {% include "academics/includes/class_form_fields.html" %}
+          <div class="flex gap-3 sm:col-span-2">
+            <button type="submit" class="btn-primary">រក្សាទុក</button>
+            <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div data-modal="delete-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-md text-center">
+        <h2 class="text-xl font-bold text-slate-900">លុបថ្នាក់រៀន</h2>
+        <p class="mt-3 text-slate-600">តើអ្នកពិតជាចង់លុប <strong data-delete-name></strong> មែនទេ?</p>
+        <form method="post" class="mt-6 flex justify-center gap-3" data-delete-form>
+          {% csrf_token %}
+          <button type="submit" class="btn-danger px-4 py-2.5 text-base">លុប</button>
+          <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block main_overflow %}overflow-hidden{% endblock %}
+
+{% block content %}
+  <div
+    data-resource-modals
+    class="page-list"
+    {% if open_receipt_modal %}data-open-modal="receipt"{% endif %}
+  >
+    {{ payloads|json_script:"receipt-payloads" }}
+
+    <div class="page-toolbar no-print">
+      <form method="get" class="flex min-w-0 flex-1 flex-wrap gap-3">
+        <input type="search" name="q" value="{{ query }}" placeholder="ស្វែងរកលេខបង្កាន់ដៃ ឬសិស្ស" class="form-input max-w-md">
+        <select name="status" class="form-input max-w-xs">
+          <option value="">គ្រប់ស្ថានភាព</option>
+          <option value="issued" {% if status == "issued" %}selected{% endif %}>បានចេញ</option>
+          <option value="voided" {% if status == "voided" %}selected{% endif %}>បានលុបចោល</option>
+        </select>
+        {% include "includes/per_page.html" %}
+        <button type="submit" class="btn-secondary">ស្វែងរក</button>
+      </form>
+      <a href="{% url 'billing:payment_create' %}" class="btn-primary">+ ទទួលបង់ប្រាក់</a>
+    </div>
+
+    <div class="panel page-list-panel no-print">
+      <div class="page-list-table">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>លេខបង្កាន់ដៃ</th>
+              <th>ថ្ងៃចេញ</th>
+              <th>សិស្ស</th>
+              <th>ថ្នាក់</th>
+              <th>សរុប</th>
+              <th>ស្ថានភាព</th>
+              <th class="text-right">សកម្មភាព</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for receipt in receipts %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter0|add:receipts.start_index }}</td>
+                <td class="font-semibold">
+                  <a href="?view={{ receipt.pk }}" class="hover:text-brand-700">{{ receipt.receipt_number }}</a>
+                </td>
+                <td>{{ receipt.issued_at|date:"d/m/Y H:i" }}</td>
+                <td>
+                  <span class="font-semibold">{{ receipt.student_name_kh }}</span>
+                  <p class="text-xs text-slate-400">{{ receipt.student_id_snapshot }}</p>
+                </td>
+                <td>{{ receipt.class_name }}</td>
+                <td class="font-semibold">{{ receipt.payment.total_display }}</td>
+                <td>
+                  {% if receipt.is_voided %}
+                    <span class="badge badge-voided">បានលុបចោល</span>
+                  {% else %}
+                    <span class="badge badge-issued">បានចេញ</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="flex justify-end gap-2">
+                    <a href="?view={{ receipt.pk }}" class="btn-quiet">មើល</a>
+                    <a href="?view={{ receipt.pk }}&print=1" class="btn-quiet">បោះពុម្ព</a>
+                    <a href="{% url 'billing:receipt_pdf' receipt.pk %}" class="btn-quiet">PDF</a>
+                    {% if not receipt.is_voided %}
+                      <button type="button" class="btn-danger" data-void-id="{{ receipt.pk }}">លុបចោល</button>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="8" class="py-16 text-center text-slate-400">មិនទាន់មានបង្កាន់ដៃ។</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "includes/pagination.html" with page=receipts extra_query=extra_query %}
+    </div>
+
+    {% include "billing/includes/receipt_modal.html" %}
+
+    <div data-modal="void-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-md text-center">
+        <h2 class="text-xl font-bold text-slate-900">លុបចោលបង្កាន់ដៃ</h2>
+        <p class="mt-3 text-slate-600">តើអ្នកពិតជាចង់លុបចោល <strong data-void-name></strong> មែនទេ? បង្កាន់ដៃដើមនឹងនៅតែរក្សាទុក។</p>
+        <form method="post" class="mt-6 flex justify-center gap-3" data-void-form>
+          {% csrf_token %}
+          <button type="submit" class="btn-danger px-4 py-2.5 text-base">លុបចោល</button>
+          <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

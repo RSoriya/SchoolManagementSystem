@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block main_overflow %}overflow-hidden{% endblock %}
+
+{% block content %}
+  <div class="page-list">
+  <section class="panel relative mb-5 w-full shrink-0 overflow-hidden px-6 py-6 sm:px-8">
+    <div class="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-brand-100/70"></div>
+    <div class="pointer-events-none absolute -bottom-20 right-24 size-40 rounded-full bg-indigo-100/60"></div>
+    <div class="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <div class="min-w-0">
+        <p class="text-sm font-semibold text-brand-700">ជម្រាបសួរ {{ greeting_name }}</p>
+        <h2 class="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">ស្វាគមន៍មកកាន់ {{ school_name }}</h2>
+        <p class="mt-2 max-w-xl text-sm leading-7 text-slate-500">ផ្ទាំងគ្រប់គ្រងស្ថានភាពសិស្ស ថ្នាក់រៀន និងការបង់ថ្លៃសិក្សាប្រចាំថ្ងៃ។</p>
+      </div>
+      <div class="flex shrink-0 flex-wrap gap-3">
+        <a href="{% url 'students:list' %}?open=add" class="btn-primary">+ ចុះឈ្មោះសិស្ស</a>
+        <a href="{% url 'billing:payment_create' %}" class="btn-secondary">ទទួលបង់ប្រាក់</a>
+        <a href="{% url 'reports:index' %}" class="btn-secondary">របាយការណ៍</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="min-h-0 flex-1 overflow-y-auto">
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <article class="kpi-card">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-sm font-semibold text-slate-500">ចំនួនសិស្សសរុប</p>
+          <p class="mt-3 text-3xl font-bold text-slate-900">{{ stats.total_students }} <span class="text-base font-semibold text-slate-400">នាក់</span></p>
+        </div>
+        <span class="icon-tile bg-brand-50 text-brand-700">
+          <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z"/></svg>
+        </span>
+      </div>
+      <p class="mt-4 flex items-center gap-2 text-xs text-slate-400">
+        <span class="badge badge-active">+{{ stats.active_students }} កំពុងរៀន</span>
+        Total enrolled students
+      </p>
+    </article>
+
+    <article class="kpi-card">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-sm font-semibold text-slate-500">ប្រាក់ចំណូលថ្ងៃនេះ</p>
+          <p class="mt-3 text-3xl font-bold text-emerald-600">{{ stats.today_usd }}</p>
+        </div>
+        <span class="icon-tile bg-emerald-50 text-emerald-700">
+          <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </span>
+      </div>
+      <p class="mt-4 text-xs text-slate-400">{{ stats.today_khr }} · Today's tuition collected</p>
+    </article>
+
+    <article class="kpi-card">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-sm font-semibold text-slate-500">ប្រាក់ចំណូលខែនេះ</p>
+          <p class="mt-3 text-3xl font-bold text-indigo-600">{{ stats.month_usd }}</p>
+        </div>
+        <span class="icon-tile bg-indigo-50 text-indigo-700">
+          <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </span>
+      </div>
+      <p class="mt-4 text-xs text-slate-400">{{ stats.month_khr }} · ឆ្នាំនេះ {{ stats.year_usd }}</p>
+    </article>
+
+    <article class="kpi-card">
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-sm font-semibold text-slate-500">សិស្សមិនទាន់បង់</p>
+          <p class="mt-3 text-3xl font-bold text-amber-600">{{ stats.unpaid_students }} <span class="text-base font-semibold text-slate-400">នាក់</span></p>
+        </div>
+        <span class="icon-tile bg-amber-50 text-amber-700">
+          <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        </span>
+      </div>
+      <p class="mt-4 text-xs text-slate-400">ហួស Due Date {{ stats.overdue_students }} នាក់ · Unpaid / overdue</p>
+    </article>
+  </div>
+
+  <div class="mt-4 grid gap-4 sm:grid-cols-2">
+    <article class="kpi-card flex items-center justify-between">
+      <div>
+        <p class="text-sm text-slate-500">វគ្គសិក្សាសកម្ម</p>
+        <p class="mt-1 text-2xl font-bold text-slate-900">{{ stats.total_courses }}</p>
+      </div>
+      <a href="{% url 'academics:course_list' %}" class="text-sm font-semibold text-brand-700">មើលវគ្គ →</a>
+    </article>
+    <article class="kpi-card flex items-center justify-between">
+      <div>
+        <p class="text-sm text-slate-500">ថ្នាក់រៀនសកម្ម</p>
+        <p class="mt-1 text-2xl font-bold text-slate-900">{{ stats.total_classes }}</p>
+      </div>
+      <a href="{% url 'academics:class_list' %}" class="text-sm font-semibold text-brand-700">មើលថ្នាក់ →</a>
+    </article>
+  </div>
+
+  <section id="due-alerts" class="panel mt-6 overflow-hidden scroll-mt-24">
+    <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-5">
+      <div>
+        <h2 class="font-bold text-slate-900">ការជូនដំណឹង Due Date</h2>
+        <p class="text-xs text-slate-400">ហួស {{ stats.overdue_students }} នាក់ · ជិតដល់ {{ stats.due_soon_students }} នាក់</p>
+      </div>
+      <a href="{% url 'core:settings' %}" class="text-sm font-semibold text-brand-700">Telegram →</a>
+    </div>
+    <div class="grid gap-0 xl:grid-cols-2">
+      <div class="overflow-x-auto xl:border-r xl:border-slate-100">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>ហួស Due Date</th>
+              <th>ថ្នាក់</th>
+              <th>Due Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for enrollment in overdue_enrollments %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter }}</td>
+                <td>
+                  <a href="{{ enrollment.student.get_absolute_url }}" class="font-semibold text-slate-900 hover:text-brand-700">{{ enrollment.student.name_kh }}</a>
+                  <p class="text-xs text-slate-400">{{ enrollment.student.student_id }}</p>
+                </td>
+                <td>{{ enrollment.course_class.name }}</td>
+                <td><span class="badge badge-voided">{{ enrollment.next_due_date|date:"d/m/Y" }}</span></td>
+                <td class="text-right">
+                  <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="py-10 text-center text-slate-400">មិនមានសិស្សហួស Due Date។</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>ជិតដល់ Due Date</th>
+              <th>ថ្នាក់</th>
+              <th>Due Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for enrollment in due_soon_enrollments %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter }}</td>
+                <td>
+                  <a href="{{ enrollment.student.get_absolute_url }}" class="font-semibold text-slate-900 hover:text-brand-700">{{ enrollment.student.name_kh }}</a>
+                  <p class="text-xs text-slate-400">{{ enrollment.student.student_id }}</p>
+                </td>
+                <td>{{ enrollment.course_class.name }}</td>
+                <td><span class="badge badge-suspended">{{ enrollment.next_due_date|date:"d/m/Y" }}</span></td>
+                <td class="text-right">
+                  <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="py-10 text-center text-slate-400">មិនមានសិស្សជិតដល់ Due Date។</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <div class="mt-6 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+    <section class="panel overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-5">
+        <div>
+          <h2 class="font-bold text-slate-900">ប្រវត្តិចុះឈ្មោះថ្មីៗ</h2>
+          <p class="text-xs text-slate-400">សិស្សដែលបានចូលថ្នាក់ចុងក្រោយ</p>
+        </div>
+        <a href="{% url 'students:list' %}" class="text-sm font-semibold text-brand-700">មើលទាំងអស់ →</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>សិស្ស</th>
+              <th>ថ្នាក់</th>
+              <th>ស្ថានភាព</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for enrollment in recent_enrollments %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter }}</td>
+                <td>
+                  <a href="{{ enrollment.student.get_absolute_url }}" class="font-semibold text-slate-900 hover:text-brand-700">{{ enrollment.student.name_kh }}</a>
+                  <p class="text-xs text-slate-400">{{ enrollment.student.student_id }}</p>
+                </td>
+                <td>{{ enrollment.course_class.name }}</td>
+                <td><span class="badge badge-{{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="py-12 text-center text-slate-400">មិនទាន់មានការចុះឈ្មោះ។</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel p-6">
+      <div class="mb-5 flex items-center justify-between">
+        <div>
+          <h2 class="font-bold text-slate-900">ចំនួនសិស្សតាមវគ្គ</h2>
+          <p class="text-xs text-slate-400">Course enrolment counts</p>
+        </div>
+        <a href="{% url 'academics:course_list' %}" class="text-sm font-semibold text-brand-700">មើលវគ្គ</a>
+      </div>
+      <div class="space-y-4">
+        {% for item in course_bars %}
+          <div>
+            <div class="mb-1.5 flex items-center justify-between text-sm">
+              <span class="font-semibold text-slate-700">{{ item.course.name }}</span>
+              <span class="text-slate-400">{{ item.course.student_count }} នាក់</span>
+            </div>
+            <div class="h-2.5 overflow-hidden rounded-full bg-slate-100">
+              <div class="h-full rounded-full bg-linear-to-r from-brand-500 to-indigo-500" style="width: {{ item.percent }}%"></div>
+            </div>
+          </div>
+        {% empty %}
+          <p class="py-8 text-center text-sm text-slate-400">បន្ថែមវគ្គសិក្សា ដើម្បីមើលចំនួនសិស្ស។</p>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <div class="mt-6 grid gap-6 xl:grid-cols-2">
+    <section class="panel overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-5">
+        <div>
+          <h2 class="font-bold text-slate-900">សិស្សមិនទាន់បង់</h2>
+          <p class="text-xs text-slate-400">{{ stats.unpaid_students }} នាក់ · ហួស Due Date {{ stats.overdue_students }} នាក់</p>
+        </div>
+        <a href="{% url 'reports:detail' 'unpaid' %}" class="text-sm font-semibold text-brand-700">របាយការណ៍ →</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>សិស្ស</th>
+              <th>ថ្នាក់</th>
+              <th>Due Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for enrollment in unpaid_enrollments %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter }}</td>
+                <td>
+                  <a href="{{ enrollment.student.get_absolute_url }}" class="font-semibold text-slate-900 hover:text-brand-700">{{ enrollment.student.name_kh }}</a>
+                  <p class="text-xs text-slate-400">{{ enrollment.student.student_id }}</p>
+                </td>
+                <td>{{ enrollment.course_class.name }}</td>
+                <td>
+                  {% if not enrollment.next_due_date %}
+                    <span class="badge badge-suspended">មិនទាន់កំណត់</span>
+                  {% elif enrollment.next_due_date < today %}
+                    <span class="badge badge-voided">{{ enrollment.next_due_date|date:"d/m/Y" }}</span>
+                  {% else %}
+                    <span class="badge badge-suspended">{{ enrollment.next_due_date|date:"d/m/Y" }}</span>
+                  {% endif %}
+                </td>
+                <td class="text-right">
+                  <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="py-12 text-center text-slate-400">មិនទាន់មានសិស្សជំពាក់។</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-5">
+        <div>
+          <h2 class="font-bold text-slate-900">ការបង់ថ្មីៗ</h2>
+          <p class="text-xs text-slate-400">បង្កាន់ដៃដែលបានចេញចុងក្រោយ</p>
+        </div>
+        <a href="{% url 'billing:payment_list' %}" class="text-sm font-semibold text-brand-700">មើលទាំងអស់ →</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>សិស្ស</th>
+              <th>សរុប</th>
+              <th>បង្កាន់ដៃ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for payment in recent_payments %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter }}</td>
+                <td>
+                  <a href="{{ payment.student.get_absolute_url }}" class="font-semibold text-slate-900 hover:text-brand-700">{{ payment.student.name_kh }}</a>
+                  <p class="text-xs text-slate-400">{{ payment.paid_on|date:"d/m/Y" }}</p>
+                </td>
+                <td class="font-semibold">{{ payment.total_display }}</td>
+                <td>
+                  {% if payment.receipt %}
+                    <a href="{{ payment.receipt.get_absolute_url }}" class="text-sm font-semibold text-brand-700">{{ payment.receipt.receipt_number }}</a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="py-12 text-center text-slate-400">មិនទាន់មានការបង់ប្រាក់។</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  </div>
+  </div>
+{% endblock %}

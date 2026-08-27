@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <form method="post" enctype="multipart/form-data" class="mx-auto max-w-4xl space-y-6" novalidate>
+    {% csrf_token %}
+    <section class="panel p-6">
+      {% include "students/includes/form_fields.html" %}
+    </section>
+    <div class="flex gap-3">
+      <button type="submit" class="btn-primary">រក្សាទុក</button>
+      <a href="{% if student %}{{ student.get_absolute_url }}{% else %}{% url 'students:list' %}{% endif %}" class="btn-secondary">បោះបង់</a>
+    </div>
+  </form>
+{% endblock %}

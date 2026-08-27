@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <form method="post" class="mx-auto max-w-3xl space-y-6" novalidate>
+    {% csrf_token %}
+    <section class="panel p-6">
+      <h2 class="mb-5 text-lg font-bold text-slate-900">ព័ត៌មានថ្នាក់</h2>
+      <div class="grid gap-5 sm:grid-cols-2">
+        {% include "academics/includes/class_form_fields.html" %}
+      </div>
+    </section>
+    <div class="flex gap-3">
+      <button type="submit" class="btn-primary">រក្សាទុក</button>
+      <a href="{% if course_class %}{{ course_class.get_absolute_url }}{% else %}{% url 'academics:class_list' %}{% endif %}" class="btn-secondary">បោះបង់</a>
+    </div>
+  </form>
+{% endblock %}

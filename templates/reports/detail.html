@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+  <style>
+    @media print {
+      .report-print-header { display: block !important; }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="report-print-header mb-4 hidden print:block">
+    <p class="text-lg font-bold">{{ school.school_name }}</p>
+    <p class="text-sm">{{ page_title }} · {{ period }}</p>
+    {% if school.address %}<p class="text-xs text-slate-500">{{ school.address }}{% if school.phone %} · {{ school.phone }}{% endif %}</p>{% endif %}
+  </div>
+
+  <div class="page-toolbar no-print">
+    <div class="flex min-w-0 flex-1 flex-wrap gap-2">
+      {% for value, label in kinds.items %}
+        <a href="{% url 'reports:detail' value %}" class="btn-quiet {% if kind == value %}bg-brand-50 text-brand-700{% endif %}">{{ label }}</a>
+      {% endfor %}
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <a href="{{ excel_url }}" class="btn-secondary">Excel</a>
+      <a href="{{ pdf_url }}" class="btn-secondary">PDF</a>
+      <button type="button" class="btn-primary" data-report-print>បោះពុម្ព</button>
+    </div>
+  </div>
+
+  <form method="get" class="panel no-print mb-5 p-4">
+    <div class="flex flex-col gap-4">
+      {% if form.date_from or form.date_to %}
+        <div class="flex flex-col gap-4">
+          {% if form.date_from %}
+            <div class="date-field w-full min-w-0">
+              <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.date_from.id_for_label }}">{{ form.date_from.label }}</label>
+              {{ form.date_from }}
+            </div>
+          {% endif %}
+          {% if form.date_to %}
+            <div class="date-field w-full min-w-0">
+              <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.date_to.id_for_label }}">{{ form.date_to.label }}</label>
+              {{ form.date_to }}
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {% for field in form %}
+          {% if field.html_name != "date_from" and field.html_name != "date_to" %}
+            <div class="min-w-0">
+              <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    <div class="mt-4 flex flex-wrap items-center gap-3">
+      {% include "includes/per_page.html" %}
+      <button type="submit" class="btn-primary">ច្រោះ</button>
+      <a href="{% url 'reports:detail' kind %}" class="btn-secondary">សម្អាត</a>
+      {% if not is_snapshot %}
+        <a href="?date_from={{ today|date:'Y-m-d' }}&date_to={{ today|date:'Y-m-d' }}" class="btn-quiet">ថ្ងៃនេះ</a>
+        <a href="?date_from={{ today|date:'Y-m-01' }}&date_to={{ today|date:'Y-m-d' }}" class="btn-quiet">ខែនេះ</a>
+        <a href="?date_from={{ today|date:'Y-01-01' }}&date_to={{ today|date:'Y-m-d' }}" class="btn-quiet">ឆ្នាំនេះ</a>
+      {% endif %}
+    </div>
+  </form>
+
+  <p class="mb-4 text-sm text-slate-500">{{ period }} · USD និង KHR ដាច់ពីគ្នា</p>
+
+  <div class="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+    {% for label, value in kpis %}
+      <article class="kpi-card">
+        <p class="text-sm font-semibold text-slate-500">{{ label }}</p>
+        <p class="mt-2 text-xl font-bold text-slate-900">{{ value }}</p>
+      </article>
+    {% endfor %}
+  </div>
+
+  {% if kind == "revenue" and summary %}
+    <div class="mb-5 grid gap-4 xl:grid-cols-2">
+      <section class="panel overflow-hidden">
+        <div class="px-5 py-4">
+          <h2 class="font-bold text-slate-900">ចំណូលតាមវគ្គ</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>វគ្គ</th>
+              <th>USD</th>
+              <th>KHR</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in summary.by_course %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter }}</td>
+                <td>{{ row.label }}</td>
+                <td>{{ row.usd }}</td>
+                <td>{{ row.khr }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="py-8 text-center text-slate-400">មិនមានទិន្នន័យ។</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      <section class="panel overflow-hidden">
+        <div class="px-5 py-4">
+          <h2 class="font-bold text-slate-900">ចំណូលតាមថ្នាក់</h2>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>ថ្នាក់</th>
+              <th>USD</th>
+              <th>KHR</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in summary.by_class %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter }}</td>
+                <td>{{ row.label }}</td>
+                <td>{{ row.usd }}</td>
+                <td>{{ row.khr }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="py-8 text-center text-slate-400">មិនមានទិន្នន័យ។</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  {% endif %}
+
+  <div class="panel overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            {% for header in headers %}
+              <th>{{ header }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in page.object_list %}
+            <tr>
+              {% for cell in row %}
+                <td>{{ cell }}</td>
+              {% endfor %}
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="{{ headers|length }}" class="py-16 text-center text-slate-400">មិនមានទិន្នន័យត្រូវនឹងតម្រង។</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="no-print">
+      {% include "includes/pagination.html" with page=page extra_query=extra_query %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    document.querySelectorAll("[data-report-print]").forEach((button) => {
+      button.addEventListener("click", () => window.print());
+    });
+    {% if open_print %}
+      window.addEventListener("load", () => window.setTimeout(() => window.print(), 250));
+    {% endif %}
+  </script>
+{% endblock %}

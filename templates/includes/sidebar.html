@@ -1,0 +1,69 @@
+{% with path=request.path %}
+<div data-sidebar-overlay class="fixed inset-0 z-40 hidden bg-slate-950/30 lg:hidden no-print"></div>
+
+<aside data-sidebar class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:translate-x-0 no-print">
+  <div class="flex h-20 items-center justify-between px-5">
+    <a href="{% url 'dashboard:index' %}" class="flex min-w-0 items-center gap-3">
+      {% if school.logo %}
+        <img src="{{ school.logo.url }}" alt="" class="size-11 shrink-0 rounded-2xl object-cover">
+      {% else %}
+        <span class="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-brand-500 to-indigo-600 text-lg font-bold text-white shadow-sm shadow-brand-600/30">S</span>
+      {% endif %}
+      <span class="min-w-0">
+        <span class="block truncate text-sm font-bold text-slate-900">{{ school_name }}</span>
+        <span class="block text-xs text-slate-400">Admin Portal</span>
+      </span>
+    </a>
+    <button data-sidebar-close type="button" class="rounded-xl p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-700 lg:hidden" aria-label="បិទម៉ឺនុយ">
+      <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+
+  <nav class="flex-1 space-y-1 overflow-y-auto px-4 py-3" aria-label="ម៉ឺនុយមេ">
+    <a href="{% url 'dashboard:index' %}" class="nav-link {% if path == '/' %}nav-link-active{% endif %}">
+      <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 13h7V4H4v9zm0 7h7v-5H4v5zm9 0h7V11h-7v9zm0-16v5h7V4h-7z"/></svg>
+      ផ្ទាំងគ្រប់គ្រង
+    </a>
+
+    <p class="px-3.5 pb-1 pt-5 text-[11px] font-bold uppercase tracking-widest text-slate-400">ការគ្រប់គ្រង</p>
+    <a href="{% url 'students:list' %}" class="nav-link {% if '/students/' in path %}nav-link-active{% endif %}">
+      <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      សិស្ស
+    </a>
+    <a href="{% url 'academics:course_list' %}" class="nav-link {% if path|slice:':9' == '/courses/' %}nav-link-active{% endif %}">
+      <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+      វគ្គសិក្សា
+    </a>
+    <a href="{% url 'academics:class_list' %}" class="nav-link {% if path|slice:':9' == '/classes/' %}nav-link-active{% endif %}">
+      <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10h18M3 6h18M3 14h18M3 18h18"/></svg>
+      ថ្នាក់រៀន
+    </a>
+    <a href="{% url 'billing:payment_list' %}" class="nav-link {% if '/payments/' in path %}nav-link-active{% endif %}">
+      <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      ការបង់ប្រាក់
+    </a>
+    <a href="{% url 'reports:index' %}" class="nav-link {% if '/reports/' in path %}nav-link-active{% endif %}">
+      <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-6"/></svg>
+      របាយការណ៍
+    </a>
+
+    <p class="px-3.5 pb-1 pt-5 text-[11px] font-bold uppercase tracking-widest text-slate-400">ប្រព័ន្ធ</p>
+    <a href="{% url 'users:list' %}" class="nav-link {% if '/users/' in path %}nav-link-active{% endif %}">
+      <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+      អ្នកប្រើប្រាស់
+    </a>
+    <a href="{% url 'audit:list' %}" class="nav-link {% if '/audit/' in path %}nav-link-active{% endif %}">
+      <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v4l2 2"/><circle cx="12" cy="12" r="9"/></svg>
+      Audit Log
+    </a>
+    <a href="{% url 'core:settings' %}" class="nav-link {% if path|slice:':10' == '/settings/' %}nav-link-active{% endif %}">
+      <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.2a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.2a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.2a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.2a1.7 1.7 0 00-1.5 1z"/></svg>
+      ការកំណត់
+    </a>
+  </nav>
+
+  <div class="border-t border-slate-100 px-5 py-4">
+    <p class="text-xs text-slate-400">Version {{ app_version }} · MVP</p>
+  </div>
+</aside>
+{% endwith %}

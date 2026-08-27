@@ -1,0 +1,37 @@
+{% if messages %}
+  <div class="toast-stack no-print" data-toast-stack aria-live="polite">
+    {% for message in messages %}
+      {% if 'error' in message.tags %}
+        <div class="toast toast-error" role="alert" data-toast data-toast-ms="6000">
+          <p class="min-w-0 flex-1">{{ message }}</p>
+          <button type="button" class="toast-close" data-toast-close aria-label="បិទ">×</button>
+        </div>
+      {% elif 'success' in message.tags %}
+        <div class="toast toast-success" role="status" data-toast data-toast-ms="3500">
+          <p class="min-w-0 flex-1">{{ message }}</p>
+          <button type="button" class="toast-close" data-toast-close aria-label="បិទ">×</button>
+        </div>
+      {% else %}
+        <div class="toast toast-info" role="status" data-toast data-toast-ms="4000">
+          <p class="min-w-0 flex-1">{{ message }}</p>
+          <button type="button" class="toast-close" data-toast-close aria-label="បិទ">×</button>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <script>
+    document.querySelectorAll("[data-toast]").forEach((toast) => {
+      const dismiss = () => {
+        if (toast.classList.contains("is-leaving")) return;
+        toast.classList.add("is-leaving");
+        toast.addEventListener("animationend", () => toast.remove(), { once: true });
+      };
+      toast.querySelector("[data-toast-close]")?.addEventListener("click", dismiss);
+      let timer = window.setTimeout(dismiss, Number(toast.dataset.toastMs || 4000));
+      toast.addEventListener("mouseenter", () => window.clearTimeout(timer));
+      toast.addEventListener("mouseleave", () => {
+        timer = window.setTimeout(dismiss, 1200);
+      });
+    });
+  </script>
+{% endif %}

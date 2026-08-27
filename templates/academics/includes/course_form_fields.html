@@ -1,0 +1,16 @@
+{% for field in form %}
+  {% if field.name == "is_active" %}
+    <label class="flex items-center gap-2 font-semibold text-slate-700 sm:col-span-2">{{ field }} កំពុងប្រើ</label>
+  {% elif field.name == "description" %}
+    <div class="sm:col-span-2">
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+    </div>
+  {% else %}
+    <div>
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% for error in field.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+  {% endif %}
+{% endfor %}

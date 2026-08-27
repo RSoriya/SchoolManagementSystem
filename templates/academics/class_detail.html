@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="panel mb-6 flex flex-wrap items-start justify-between gap-3 p-6">
+    <div>
+      <p class="text-sm font-semibold text-brand-700">{{ course_class.course.name }}</p>
+      <h2 class="text-2xl font-bold text-slate-900">{{ course_class.name }}</h2>
+      <p class="mt-1 text-sm text-slate-500">
+        {{ course_class.study_days_display }} · {{ course_class.study_time_display }}
+        · {{ course_class.start_date|date:"d/m/Y" }}{% if course_class.end_date %} – {{ course_class.end_date|date:"d/m/Y" }}{% endif %}
+      </p>
+      <p class="text-sm text-slate-500">គ្រូ៖ {{ course_class.instructor_name|default:"—" }}</p>
+    </div>
+    <a href="{% url 'academics:class_list' %}?edit={{ course_class.pk }}" class="btn-secondary">កែថ្នាក់</a>
+  </div>
+
+  <div class="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+    <section class="panel overflow-hidden">
+      <div class="border-b border-slate-100 px-5 py-4">
+        <h3 class="font-bold text-slate-900">សិស្សក្នុងថ្នាក់</h3>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-16">ល.រ</th>
+              <th>សិស្ស</th>
+              <th>ថ្ងៃចុះឈ្មោះ</th>
+              <th>ស្ថានភាព</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for enrollment in enrollments %}
+              <tr>
+                <td class="text-slate-400">{{ forloop.counter }}</td>
+                <td>
+                  <a href="{{ enrollment.student.get_absolute_url }}" class="font-semibold hover:text-brand-700">{{ enrollment.student.name_kh }}</a>
+                  <p class="text-xs text-slate-500">{{ enrollment.student.student_id }}</p>
+                </td>
+                <td>{{ enrollment.enrolled_on|date:"d/m/Y" }}</td>
+                <td><span class="badge badge-{{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
+                <td class="text-right">
+                  {% if enrollment.status == "active" or enrollment.status == "suspended" %}
+                    <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="py-10 text-center text-slate-500">មិនទាន់មានសិស្ស។</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel p-6">
+      <h3 class="mb-4 font-bold text-slate-900">ចុះឈ្មោះសិស្ស</h3>
+      <form method="post" action="{% url 'academics:class_enroll' course_class.pk %}" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ enroll_form.student.id_for_label }}">{{ enroll_form.student.label }}</label>
+          {{ enroll_form.student }}
+        </div>
+        <div>
+          <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ enroll_form.next_due_date.id_for_label }}">{{ enroll_form.next_due_date.label }}</label>
+          {{ enroll_form.next_due_date }}
+        </div>
+        <div>
+          <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ enroll_form.note.id_for_label }}">{{ enroll_form.note.label }}</label>
+          {{ enroll_form.note }}
+        </div>
+        <button type="submit" class="btn-primary">ចុះឈ្មោះ</button>
+      </form>
+    </section>
+  </div>
+{% endblock %}

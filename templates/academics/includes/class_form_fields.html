@@ -1,0 +1,41 @@
+<div class="sm:col-span-2">
+  <label class="mb-2 block font-semibold text-slate-700" for="{{ form.course.id_for_label }}">{{ form.course.label }}</label>
+  {{ form.course }}
+  {% for error in form.course.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+</div>
+<div>
+  <label class="mb-2 block font-semibold text-slate-700" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+  {{ form.name }}
+  {% for error in form.name.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+</div>
+<div>
+  <label class="mb-2 block font-semibold text-slate-700" for="{{ form.instructor_name.id_for_label }}">{{ form.instructor_name.label }}</label>
+  {{ form.instructor_name }}
+</div>
+<div class="date-field min-w-0 col-span-full xl:col-span-1">
+  <label class="mb-2 block font-semibold text-slate-700" for="{{ form.start_date.id_for_label }}">{{ form.start_date.label }}</label>
+  {{ form.start_date }}
+  {% for error in form.start_date.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+</div>
+<div class="date-field min-w-0 col-span-full xl:col-span-1">
+  <label class="mb-2 block font-semibold text-slate-700" for="{{ form.end_date.id_for_label }}">{{ form.end_date.label }}</label>
+  {{ form.end_date }}
+  {% for error in form.end_date.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+</div>
+<div>
+  <label class="mb-2 block font-semibold text-slate-700" for="{{ form.start_time.id_for_label }}">{{ form.start_time.label }}</label>
+  {{ form.start_time }}
+</div>
+<div>
+  <label class="mb-2 block font-semibold text-slate-700" for="{{ form.end_time.id_for_label }}">{{ form.end_time.label }}</label>
+  {{ form.end_time }}
+  {% for error in form.end_time.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+</div>
+<div class="sm:col-span-2">
+  <p class="mb-2 font-semibold text-slate-700">{{ form.study_days.label }}</p>
+  {{ form.study_days }}
+  {% for error in form.study_days.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+</div>
+<label class="flex items-center gap-2 font-semibold text-slate-700">
+  {{ form.is_active }} កំពុងបើក
+</label>

@@ -1,0 +1,55 @@
+{% load static %}
+<!doctype html>
+<html lang="km">
+<head>
+  <meta charset="utf-8">
+  <title>{{ page_title }} · {{ school.school_name }}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <style>
+    @page { size: A4 portrait; margin: 12mm; }
+    body { background: white; }
+  </style>
+</head>
+<body class="bg-white p-6 font-sans text-slate-800">
+  <header class="mb-6 border-b border-slate-200 pb-4">
+    <p class="text-lg font-bold">{{ school.school_name }}</p>
+    <p>{{ page_title }}</p>
+    <p class="text-sm text-slate-500">{{ period }} · USD និង KHR ដាច់ពីគ្នា</p>
+  </header>
+  <div class="mb-5 grid grid-cols-2 gap-3">
+    {% for label, value in kpis %}
+      <div>
+        <p class="text-sm text-slate-500">{{ label }}</p>
+        <p class="font-bold">{{ value }}</p>
+      </div>
+    {% endfor %}
+  </div>
+  {% if kind == "revenue" and summary.by_course %}
+    <h2 class="mb-2 font-bold">ចំណូលតាមវគ្គ</h2>
+    <table class="data-table mb-5">
+      <thead><tr><th>ល.រ</th><th>វគ្គ</th><th>USD</th><th>KHR</th></tr></thead>
+      <tbody>
+        {% for row in summary.by_course %}
+          <tr><td>{{ forloop.counter }}</td><td>{{ row.label }}</td><td>{{ row.usd }}</td><td>{{ row.khr }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        {% for header in headers %}<th>{{ header }}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in table %}
+        <tr>
+          {% for cell in row %}<td>{{ cell }}</td>{% endfor %}
+        </tr>
+      {% empty %}
+        <tr><td colspan="{{ headers|length }}">មិនមានទិន្នន័យ។</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
