@@ -5,7 +5,7 @@ from decimal import Decimal
 from django.utils import timezone
 
 from apps.billing.models import Payment, Refund
-from apps.billing.services import due_soon_enrollments, overdue_enrollments, unpaid_enrollments
+from apps.billing.services import attach_period_balances, due_soon_enrollments, overdue_enrollments, unpaid_enrollments
 from apps.core.constants import format_money
 
 ZERO = Decimal("0.00")
@@ -114,11 +114,11 @@ def _filter_enrollments(queryset, filters):
 
 
 def unpaid_rows(filters, today=None):
-    return _filter_enrollments(unpaid_enrollments(today), filters)
+    return attach_period_balances(_filter_enrollments(unpaid_enrollments(today), filters))
 
 
 def overdue_rows(filters, today=None):
-    return _filter_enrollments(overdue_enrollments(today), filters)
+    return attach_period_balances(_filter_enrollments(overdue_enrollments(today), filters))
 
 
 def paid_groups(filters):

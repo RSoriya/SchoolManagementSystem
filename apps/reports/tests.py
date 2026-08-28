@@ -147,15 +147,31 @@ class ReportTests(TestCase):
         self.assertContains(response, "មិនមានទិន្នន័យត្រូវនឹងតម្រង។")
 
     def test_unknown_kind_is_404(self):
-        response = self.client.get(reverse("reports:detail", args=["attendance"]))
+        response = self.client.get(reverse("reports:detail", args=["not-a-kind"]))
         self.assertEqual(response.status_code, 404)
 
     def test_every_report_kind_loads(self):
-        for kind in ("revenue", "paid", "unpaid", "overdue", "refunds"):
+        for kind in ("revenue", "paid", "unpaid", "overdue", "refunds", "attendance"):
             with self.subTest(kind=kind):
                 response = self.client.get(reverse("reports:detail", args=[kind]))
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, "ល.រ")
+
+    def test_attendance_report_lists_marked_student(self):
+        from apps.academics.attendance import mark_class_attendance
+        from apps.academics.models import AttendanceRecord
+
+        mark_class_attendance(
+            self.course_class,
+            timezone.localdate(),
+            {self.enrollment.pk: AttendanceRecord.Status.PRESENT},
+            user=self.user,
+        )
+        response = self.client.get(reverse("reports:detail", args=["attendance"]))
+        self.assertContains(response, "សុខា")
+        self.assertContains(response, "វត្តមាន")
+        self.assertContains(response, "យឺត")
+        self.assertContains(response, "English Level 1 – Morning")
 
     def test_pdf_or_print_fallback(self):
         self._pay()

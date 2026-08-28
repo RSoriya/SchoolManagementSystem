@@ -11,7 +11,7 @@
       {% endif %}
       <span class="min-w-0">
         <span class="block truncate text-sm font-bold text-slate-900">{{ school_name }}</span>
-        <span class="block text-xs text-slate-400">Admin Portal</span>
+        <span class="block text-xs text-slate-400">{{ role_label|default:"Staff" }}</span>
       </span>
     </a>
     <button data-sidebar-close type="button" class="rounded-xl p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-700 lg:hidden" aria-label="បិទម៉ឺនុយ">
@@ -26,44 +26,62 @@
     </a>
 
     <p class="px-3.5 pb-1 pt-5 text-[11px] font-bold uppercase tracking-widest text-slate-400">ការគ្រប់គ្រង</p>
+    {% if can.view_student %}
     <a href="{% url 'students:list' %}" class="nav-link {% if '/students/' in path %}nav-link-active{% endif %}">
       <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
       សិស្ស
     </a>
+    {% endif %}
+    {% if can.view_course %}
     <a href="{% url 'academics:course_list' %}" class="nav-link {% if path|slice:':9' == '/courses/' %}nav-link-active{% endif %}">
       <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
       វគ្គសិក្សា
     </a>
+    {% endif %}
+    {% if can.view_class %}
     <a href="{% url 'academics:class_list' %}" class="nav-link {% if path|slice:':9' == '/classes/' %}nav-link-active{% endif %}">
       <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10h18M3 6h18M3 14h18M3 18h18"/></svg>
       ថ្នាក់រៀន
     </a>
+    {% endif %}
+    {% if can.view_payment %}
     <a href="{% url 'billing:payment_list' %}" class="nav-link {% if '/payments/' in path %}nav-link-active{% endif %}">
       <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
       ការបង់ប្រាក់
     </a>
+    {% endif %}
+    {% if can.view_reports %}
     <a href="{% url 'reports:index' %}" class="nav-link {% if '/reports/' in path %}nav-link-active{% endif %}">
       <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-6"/></svg>
       របាយការណ៍
     </a>
+    {% endif %}
 
+    {% if can.manage_users or can.view_audit or can.manage_settings %}
     <p class="px-3.5 pb-1 pt-5 text-[11px] font-bold uppercase tracking-widest text-slate-400">ប្រព័ន្ធ</p>
+    {% if can.manage_users %}
     <a href="{% url 'users:list' %}" class="nav-link {% if '/users/' in path %}nav-link-active{% endif %}">
       <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
       អ្នកប្រើប្រាស់
     </a>
+    {% endif %}
+    {% if can.view_audit %}
     <a href="{% url 'audit:list' %}" class="nav-link {% if '/audit/' in path %}nav-link-active{% endif %}">
       <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v4l2 2"/><circle cx="12" cy="12" r="9"/></svg>
       Audit Log
     </a>
+    {% endif %}
+    {% if can.manage_settings %}
     <a href="{% url 'core:settings' %}" class="nav-link {% if path|slice:':10' == '/settings/' %}nav-link-active{% endif %}">
       <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.2a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.2a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.2a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.2a1.7 1.7 0 00-1.5 1z"/></svg>
       ការកំណត់
     </a>
+    {% endif %}
+    {% endif %}
   </nav>
 
   <div class="border-t border-slate-100 px-5 py-4">
-    <p class="text-xs text-slate-400">Version {{ app_version }} · MVP</p>
+    <p class="text-xs text-slate-400">Version {{ app_version }}</p>
   </div>
 </aside>
 {% endwith %}

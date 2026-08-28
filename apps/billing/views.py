@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-from apps.accounts.permissions import admin_required
+from apps.accounts.permissions import permission_required
 from apps.core.pagination import extra_query, paginate, per_page_value
 
 from .forms import PaymentForm, RefundForm
@@ -43,7 +43,7 @@ def _view_receipt(request):
     )
 
 
-@admin_required
+@permission_required("billing.view_payment")
 @require_GET
 def payment_list(request):
     query = request.GET.get("q", "").strip()
@@ -85,7 +85,7 @@ def payment_list(request):
     )
 
 
-@admin_required
+@permission_required("billing.collect_payment")
 @require_http_methods(["GET", "POST"])
 def payment_create(request):
     initial = {"paid_on": timezone.localdate()}
@@ -140,14 +140,14 @@ def _void_and_redirect(request, payment, next_url):
     return redirect(next_url)
 
 
-@admin_required
+@permission_required("billing.void_payment")
 @require_POST
 def payment_void(request, pk):
     payment = get_object_or_404(Payment, pk=pk)
     return _void_and_redirect(request, payment, reverse("billing:payment_list"))
 
 
-@admin_required
+@permission_required("billing.refund_payment")
 @require_POST
 def payment_refund(request, pk):
     payment = get_object_or_404(Payment, pk=pk)
@@ -169,7 +169,7 @@ def payment_refund(request, pk):
     return redirect("billing:payment_list")
 
 
-@admin_required
+@permission_required("billing.view_payment")
 @require_GET
 def receipt_list(request):
     params = request.GET.copy()
@@ -187,21 +187,21 @@ def _receipt_context(receipt, auto_print=False):
     }
 
 
-@admin_required
+@permission_required("billing.view_payment")
 @require_GET
 def receipt_detail(request, pk):
     receipt = get_object_or_404(Receipt, pk=pk)
     return redirect(receipt)
 
 
-@admin_required
+@permission_required("billing.view_payment")
 @require_GET
 def receipt_print(request, pk):
     receipt = get_object_or_404(Receipt, pk=pk)
     return redirect(f"{receipt.get_absolute_url()}&print=1")
 
 
-@admin_required
+@permission_required("billing.view_payment")
 @require_GET
 def receipt_pdf(request, pk):
     receipt = get_object_or_404(
@@ -230,7 +230,7 @@ def receipt_pdf(request, pk):
         return redirect(f"{receipt.get_absolute_url()}&print=1")
 
 
-@admin_required
+@permission_required("billing.void_payment")
 @require_POST
 def receipt_void(request, pk):
     receipt = get_object_or_404(Receipt, pk=pk)

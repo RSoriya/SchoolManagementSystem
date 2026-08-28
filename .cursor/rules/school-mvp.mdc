@@ -1,0 +1,16 @@
+---
+description: School Management System MVP rules
+alwaysApply: true
+---
+
+# MVP rules
+
+- Keep the existing Django app layout (`accounts`, `students`, `academics`, `billing`, `notifications`, `reports`, `audit`, `dashboard`, `core`). Extend it; do not rebuild.
+- V1 is Admin-only, single branch. V2 Phase 1 adds Cashier and Teacher staff roles in the same portal (Django Groups). Do not add parent/student portals or a switch-role UI.
+- Never hard-delete enrollment, payment, or receipt history. Transfers, voids, and refunds create or flag records.
+- Partial payments allowed. Remaining balance is tracked per period. After a monthly period is paid in full, next due date defaults to +1 calendar month (editable). No auto-generated monthly invoices. No currency conversion.
+- Student codes `STU-YYYY-0001`. Receipts `RCP-YYYY-000001`.
+- UI is Khmer-first. Follow existing Tailwind tokens (`brand`, `ink`, `form-input`, `btn-primary`).
+- Full-page `data-table` lists always include per-page (១០/២០) and pagination (`បង្ហាញ … · មុន/បន្ទាប់`), same as Students and Courses.
+- Do not copy EduPay source. Do not add report cards, Sheets sync, or payment gateways.
+- V2 Phase 3: class page is a hub. Attendance, scores, and results are class sub-pages (not sidebar menus). Teacher marks own classes (`CourseClass.instructor`); Admin marks all; Cashier cannot view or mark. Attendance is by day: serial, student ID, name, gender, date dropdown (present / late / excused / absent), totals for a chosen from–to date range. Same day in both fields to mark; a range to view totals. Scores: create exam then enter marks. Results: per-student totals, average, and និទ្ទេស for the class course (one course per class). Edit allowed; never hard-delete attendance or score history. No printed report cards.

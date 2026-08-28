@@ -25,7 +25,9 @@
         {% include "includes/per_page.html" %}
         <button type="submit" class="btn-secondary">ស្វែងរក</button>
       </form>
+      {% if can.add_student %}
       <button type="button" class="btn-primary" data-add-open>+ បន្ថែមសិស្ស</button>
+      {% endif %}
     </div>
 
     <div class="panel page-list-panel">
@@ -70,10 +72,16 @@
                   {% endif %}
                 </td>
                 <td>
+                  {% if can.change_student or can.delete_student %}
                   <div class="flex justify-end gap-2">
+                    {% if can.change_student %}
                     <button type="button" class="btn-quiet" data-edit-id="{{ student.pk }}">កែ</button>
+                    {% endif %}
+                    {% if can.delete_student %}
                     <button type="button" class="btn-danger" data-delete-id="{{ student.pk }}">លុប</button>
+                    {% endif %}
                   </div>
+                  {% endif %}
                 </td>
               </tr>
             {% empty %}
@@ -87,6 +95,7 @@
       {% include "includes/pagination.html" with page=students extra_query=extra_query %}
     </div>
 
+    {% if can.add_student or can.change_student %}
     <div data-modal="form-modal" class="modal-overlay" role="dialog" aria-modal="true">
       <div class="modal-backdrop" data-modal-close></div>
       <div class="modal-panel modal-panel-lg">
@@ -105,7 +114,9 @@
         </form>
       </div>
     </div>
+    {% endif %}
 
+    {% if can.delete_student %}
     <div data-modal="delete-modal" class="modal-overlay" role="dialog" aria-modal="true">
       <div class="modal-backdrop" data-modal-close></div>
       <div class="modal-panel modal-panel-md text-center">
@@ -118,5 +129,6 @@
         </form>
       </div>
     </div>
+    {% endif %}
   </div>
 {% endblock %}

@@ -9,8 +9,14 @@
   {% for error in form.name.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
 </div>
 <div>
+  <label class="mb-2 block font-semibold text-slate-700" for="{{ form.instructor.id_for_label }}">{{ form.instructor.label }}</label>
+  {{ form.instructor }}
+  {% for error in form.instructor.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+</div>
+<div>
   <label class="mb-2 block font-semibold text-slate-700" for="{{ form.instructor_name.id_for_label }}">{{ form.instructor_name.label }}</label>
   {{ form.instructor_name }}
+  <p class="mt-1 text-xs text-slate-400">បើជ្រើសគណនីគ្រូ ឈ្មោះនេះបំពេញស្វ័យប្រវត្តិ។</p>
 </div>
 <div class="date-field min-w-0 col-span-full xl:col-span-1">
   <label class="mb-2 block font-semibold text-slate-700" for="{{ form.start_date.id_for_label }}">{{ form.start_date.label }}</label>

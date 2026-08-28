@@ -27,6 +27,8 @@
         <div class="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
           <p>រូបិយប័ណ្ណ៖ <strong data-currency-label class="text-slate-900">—</strong></p>
           <p class="mt-1">ថ្លៃវគ្គ៖ <strong data-fee-label class="text-slate-900">—</strong></p>
+          <p class="mt-1">បានបង់រយៈពេលនេះ៖ <strong data-paid-label class="text-slate-900">—</strong></p>
+          <p class="mt-1">នៅជំពាក់៖ <strong data-remaining-label class="text-slate-900">—</strong></p>
           <p class="mt-1">Due Date បច្ចុប្បន្ន៖ <strong data-due-label class="text-slate-900">—</strong></p>
         </div>
       </div>
@@ -34,7 +36,7 @@
 
     <section class="panel p-6">
       <h3 class="mb-1 text-lg font-bold text-slate-900">ធាតុថ្លៃ</h3>
-      <p class="mb-4 text-sm text-slate-500">មិនអនុញ្ញាតបង់ផ្នែកខ្លះ។ បញ្ចុះតម្លៃ និងអាហារូបករត្រូវកត់ជាធាតុដាច់ដោយឡែក។ ថ្លៃយឺតបញ្ចូលដោយដៃ។</p>
+      <p class="mb-4 text-sm text-slate-500">អាចបង់ផ្នែកខ្លះ។ ថ្លៃសិក្សាមិនលើសចំនួននៅជំពាក់។ បញ្ចុះតម្លៃ និងអាហារូបករត្រូវកត់ជាធាតុដាច់ដោយឡែក។ ថ្លៃយឺតបញ្ចូលដោយដៃ។</p>
       <div class="grid gap-5 sm:grid-cols-2">
         <div>
           <label class="mb-2 block font-semibold text-slate-700" for="{{ form.tuition_amount.id_for_label }}">{{ form.tuition_amount.label }}</label>
@@ -146,10 +148,14 @@
       const data = payloads[enrollment.value];
       const currencyLabel = form.querySelector("[data-currency-label]");
       const feeLabel = form.querySelector("[data-fee-label]");
+      const paidLabel = form.querySelector("[data-paid-label]");
+      const remainingLabel = form.querySelector("[data-remaining-label]");
       const dueLabel = form.querySelector("[data-due-label]");
       if (!data) {
         if (currencyLabel) currencyLabel.textContent = "—";
         if (feeLabel) feeLabel.textContent = "—";
+        if (paidLabel) paidLabel.textContent = "—";
+        if (remainingLabel) remainingLabel.textContent = "—";
         if (dueLabel) dueLabel.textContent = "—";
         if (nextDue) nextDue.required = false;
         recalc();
@@ -157,13 +163,29 @@
       }
       if (currencyLabel) currencyLabel.textContent = data.currency;
       if (feeLabel) feeLabel.textContent = data.money;
+      if (paidLabel) paidLabel.textContent = data.money_paid || "—";
+      if (remainingLabel) remainingLabel.textContent = data.money_remaining || "—";
       if (dueLabel) dueLabel.textContent = data.due || "—";
-      if (overwrite || !form.tuition_amount.value) form.tuition_amount.value = data.fee;
+      const tuitionDefault = data.remaining || data.fee;
+      if (overwrite || !form.tuition_amount.value) form.tuition_amount.value = tuitionDefault;
       if (data.period_label && (overwrite || !form.period_label.value)) form.period_label.value = data.period_label;
       if (data.period_start && (overwrite || !form.period_start.value)) form.period_start.value = data.period_start;
       if (data.period_end && (overwrite || !form.period_end.value)) form.period_end.value = data.period_end;
-      if (nextDue) nextDue.required = data.fee_type === "monthly";
+      syncNextDue(overwrite);
+      if (nextDue) nextDue.required = false;
       recalc();
+    };
+
+    const syncNextDue = (overwrite = false) => {
+      const data = payloads[enrollment.value];
+      if (!nextDue || !data) return;
+      const remaining = parseAmount(data.remaining);
+      const tuition = parseAmount(form.tuition_amount.value);
+      if (remaining > 0 && tuition + 0.001 < remaining) {
+        if (overwrite || data.due) nextDue.value = data.due || "";
+      } else if (data.next_due && (overwrite || !nextDue.value)) {
+        nextDue.value = data.next_due;
+      }
     };
 
     const recalc = () => {
@@ -189,7 +211,10 @@
     enrollment?.addEventListener("change", () => applyEnrollment(true));
     method?.addEventListener("change", toggleReference);
     moneyFields.forEach((name) => {
-      form.querySelector(`[name="${name}"]`)?.addEventListener("input", recalc);
+      form.querySelector(`[name="${name}"]`)?.addEventListener("input", () => {
+        if (name === "tuition_amount") syncNextDue(true);
+        recalc();
+      });
     });
     applyEnrollment();
     toggleReference();

@@ -25,7 +25,9 @@
         {% include "includes/per_page.html" %}
         <button type="submit" class="btn-secondary">ស្វែងរក</button>
       </form>
+      {% if can.add_class %}
       <button type="button" class="btn-primary" data-add-open {% if course_id %}data-course="{{ course_id }}"{% endif %}>+ បន្ថែមថ្នាក់</button>
+      {% endif %}
     </div>
 
     <div class="panel page-list-panel">
@@ -48,13 +50,17 @@
                 <td class="text-slate-400">{{ forloop.counter0|add:classes.start_index }}</td>
                 <td><a href="{{ class.get_absolute_url }}" class="font-semibold hover:text-brand-700">{{ class.name }}</a></td>
                 <td>{{ class.course.name }}</td>
-                <td>{{ class.instructor_name|default:"—" }}</td>
+                <td>{{ class.instructor_display }}</td>
                 <td class="text-slate-500">{{ class.study_days_display }} · {{ class.study_time_display }}</td>
                 <td><span class="badge badge-active">{{ class.active_students }} នាក់</span></td>
                 <td>
                   <div class="flex justify-end gap-2">
+                    {% if can.change_class %}
                     <button type="button" class="btn-quiet" data-edit-id="{{ class.pk }}">កែ</button>
+                    {% endif %}
+                    {% if can.delete_class %}
                     <button type="button" class="btn-danger" data-delete-id="{{ class.pk }}">លុប</button>
+                    {% endif %}
                   </div>
                 </td>
               </tr>
@@ -69,6 +75,7 @@
       {% include "includes/pagination.html" with page=classes extra_query=extra_query %}
     </div>
 
+    {% if can.add_class or can.change_class %}
     <div data-modal="form-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="class-form-title">
       <div class="modal-backdrop" data-modal-close></div>
       <div class="modal-panel modal-panel-lg">
@@ -87,7 +94,9 @@
         </form>
       </div>
     </div>
+    {% endif %}
 
+    {% if can.delete_class %}
     <div data-modal="delete-modal" class="modal-overlay" role="dialog" aria-modal="true">
       <div class="modal-backdrop" data-modal-close></div>
       <div class="modal-panel modal-panel-md text-center">
@@ -100,5 +109,6 @@
         </form>
       </div>
     </div>
+    {% endif %}
   </div>
 {% endblock %}

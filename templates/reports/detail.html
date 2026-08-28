@@ -69,7 +69,14 @@
     </div>
   </form>
 
-  <p class="mb-4 text-sm text-slate-500">{{ period }} · USD និង KHR ដាច់ពីគ្នា</p>
+  <p class="mb-4 text-sm text-slate-500">
+    {{ period }}
+    {% if kind == "attendance" %}
+      · ស្ថានភាព៖ វត្តមាន · យឺត · សុំច្បាប់ · អវត្តមាន
+    {% else %}
+      · USD និង KHR ដាច់ពីគ្នា
+    {% endif %}
+  </p>
 
   <div class="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
     {% for label, value in kpis %}

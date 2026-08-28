@@ -1,11 +1,16 @@
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET
 
-from apps.accounts.permissions import admin_required
+from apps.accounts.permissions import permission_required
+from apps.accounts.roles import user_has_perm
+from apps.accounts.scoping import visible_classes
+from apps.academics.attendance import attendance_report_rows
+from apps.academics.models import CourseClass
 from apps.core.constants import format_money
 from apps.core.pagination import extra_query, paginate, per_page_value
 
@@ -65,7 +70,14 @@ def _period_label(filters, kind, today):
     return "គ្រប់រយៈពេល"
 
 
-def _build_report(kind, filters, today):
+def _report_kinds_for(user):
+    kinds = dict(REPORT_KINDS)
+    if not user_has_perm(user, "academics.view_attendancerecord"):
+        kinds.pop("attendance", None)
+    return kinds
+
+
+def _build_report(kind, filters, today, user=None):
     summary = revenue_summary(filters) if kind in {"revenue", "paid", "refunds"} else None
     if kind == "revenue":
         rows = list(filtered_payments(filters))
@@ -115,7 +127,7 @@ def _build_report(kind, filters, today):
         ]
     elif kind == "unpaid":
         rows = list(unpaid_rows(filters, today))
-        headers = ["ល.រ", "សិស្ស", "លេខសម្គាល់", "ថ្នាក់", "Due Date", "ថ្លៃវគ្គ"]
+        headers = ["ល.រ", "សិស្ស", "លេខសម្គាល់", "ថ្នាក់", "Due Date", "នៅជំពាក់"]
         table = [
             [
                 index,
@@ -123,14 +135,14 @@ def _build_report(kind, filters, today):
                 enrollment.student.student_id,
                 enrollment.course_class.name,
                 enrollment.next_due_date.strftime("%d/%m/%Y") if enrollment.next_due_date else "មិនទាន់កំណត់",
-                format_money(enrollment.course_class.course.default_fee, enrollment.course_class.course.currency),
+                enrollment.period_remaining_display,
             ]
             for index, enrollment in enumerate(rows, start=1)
         ]
         kpis = [("សិស្សមិនទាន់បង់", str(len({row.student_id for row in rows})))]
     elif kind == "overdue":
         rows = list(overdue_rows(filters, today))
-        headers = ["ល.រ", "សិស្ស", "លេខសម្គាល់", "ថ្នាក់", "Due Date", "ថ្លៃវគ្គ"]
+        headers = ["ល.រ", "សិស្ស", "លេខសម្គាល់", "ថ្នាក់", "Due Date", "នៅជំពាក់"]
         table = [
             [
                 index,
@@ -138,7 +150,7 @@ def _build_report(kind, filters, today):
                 enrollment.student.student_id,
                 enrollment.course_class.name,
                 enrollment.next_due_date.strftime("%d/%m/%Y"),
-                format_money(enrollment.course_class.course.default_fee, enrollment.course_class.course.currency),
+                enrollment.period_remaining_display,
             ]
             for index, enrollment in enumerate(rows, start=1)
         ]
@@ -164,6 +176,39 @@ def _build_report(kind, filters, today):
             ("សង USD", summary["refunds"]["usd"]),
             ("សង KHR", summary["refunds"]["khr"]),
         ]
+    elif kind == "attendance":
+        classes = visible_classes(user, CourseClass.objects.all()) if user else CourseClass.objects.none()
+        rows = attendance_report_rows(filters, classes)
+        headers = ["ល.រ", "សិស្ស", "លេខសម្គាល់", "ថ្នាក់", "វត្តមាន", "យឺត", "សុំច្បាប់", "អវត្តមាន", "សរុប", "% វត្តមាន"]
+        table = [
+            [
+                index,
+                row["student"].name_kh,
+                row["student"].student_id,
+                row["course_class"].name,
+                row["present"],
+                row["late"],
+                row["excused"],
+                row["absent"],
+                row["total"],
+                row["rate"],
+            ]
+            for index, row in enumerate(rows, start=1)
+        ]
+        present = sum(row["present"] for row in rows)
+        late = sum(row["late"] for row in rows)
+        absent = sum(row["absent"] for row in rows)
+        excused = sum(row["excused"] for row in rows)
+        marked = present + late + absent + excused
+        attended = present + late
+        kpis = [
+            ("សិស្ស/ថ្នាក់", str(len(rows))),
+            ("វត្តមាន", str(present)),
+            ("យឺត", str(late)),
+            ("សុំច្បាប់", str(excused)),
+            ("អវត្តមាន", str(absent)),
+            ("% វត្តមាន", f"{round(attended * 100 / marked)}%" if marked else "—"),
+        ]
     else:
         raise Http404()
     return {
@@ -177,7 +222,7 @@ def _build_report(kind, filters, today):
     }
 
 
-@admin_required
+@permission_required("billing.view_payment")
 @require_GET
 def index(request):
     today = timezone.localdate()
@@ -201,6 +246,8 @@ def index(request):
 def _report_context(request, kind):
     if kind not in REPORT_KINDS:
         raise Http404()
+    if kind == "attendance" and not user_has_perm(request.user, "academics.view_attendancerecord"):
+        raise PermissionDenied
     today = timezone.localdate()
     start, end = default_range(today)
     initial = {}
@@ -208,7 +255,7 @@ def _report_context(request, kind):
         initial = {"date_from": start, "date_to": end}
     form = ReportFilterForm(request.GET or None, kind=kind, initial=initial)
     filters = _filters_from_form(form, kind, today)
-    report = _build_report(kind, filters, today)
+    report = _build_report(kind, filters, today, user=request.user)
     school = get_school_settings()
     period = _period_label(filters, kind, today)
     query = _export_query(request)
@@ -231,20 +278,20 @@ def _report_context(request, kind):
         "excel_url": reverse("reports:excel", args=[kind]) + query,
         "pdf_url": reverse("reports:pdf", args=[kind]) + query,
         "print_url": reverse("reports:detail", args=[kind]) + (query + ("&" if query else "?")) + "print=1",
-        "kinds": REPORT_KINDS,
+        "kinds": _report_kinds_for(request.user),
         "is_snapshot": kind in SNAPSHOT_KINDS,
         "open_print": request.GET.get("print") == "1",
     }
 
 
-@admin_required
+@permission_required("billing.view_payment")
 @require_GET
 def detail(request, kind):
     context = _report_context(request, kind)
     return render(request, "reports/detail.html", context)
 
 
-@admin_required
+@permission_required("billing.view_payment")
 @require_GET
 def export_excel(request, kind):
     context = _report_context(request, kind)
@@ -280,7 +327,7 @@ def export_excel(request, kind):
     return excel_response(filename, sheets)
 
 
-@admin_required
+@permission_required("billing.view_payment")
 @require_GET
 def export_pdf(request, kind):
     context = _report_context(request, kind)

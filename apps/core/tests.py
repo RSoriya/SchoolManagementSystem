@@ -133,17 +133,21 @@ class SeedDemoDataTests(TestCase):
         from apps.academics.models import Enrollment
         from apps.billing.models import Payment
         from apps.students.models import Student
+        from apps.academics.models import AttendanceRecord
 
         students = Student.objects.count()
         enrollments = Enrollment.objects.count()
         payments = Payment.objects.count()
+        attendance = AttendanceRecord.objects.count()
         self.assertGreaterEqual(students, 24)
         self.assertGreater(enrollments, 20)
         self.assertGreater(payments, 10)
+        self.assertGreater(attendance, 10)
         call_command("seed_demo_data")
         self.assertEqual(Student.objects.count(), students)
         self.assertEqual(Enrollment.objects.count(), enrollments)
         self.assertEqual(Payment.objects.count(), payments)
+        self.assertEqual(AttendanceRecord.objects.count(), attendance)
 
 
 class PaginationTests(SimpleTestCase):

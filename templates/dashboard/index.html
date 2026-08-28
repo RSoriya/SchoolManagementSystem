@@ -14,9 +14,15 @@
         <p class="mt-2 max-w-xl text-sm leading-7 text-slate-500">ផ្ទាំងគ្រប់គ្រងស្ថានភាពសិស្ស ថ្នាក់រៀន និងការបង់ថ្លៃសិក្សាប្រចាំថ្ងៃ។</p>
       </div>
       <div class="flex shrink-0 flex-wrap gap-3">
+        {% if can.add_student %}
         <a href="{% url 'students:list' %}?open=add" class="btn-primary">+ ចុះឈ្មោះសិស្ស</a>
+        {% endif %}
+        {% if can.collect_payment %}
         <a href="{% url 'billing:payment_create' %}" class="btn-secondary">ទទួលបង់ប្រាក់</a>
+        {% endif %}
+        {% if can.view_reports %}
         <a href="{% url 'reports:index' %}" class="btn-secondary">របាយការណ៍</a>
+        {% endif %}
       </div>
     </div>
   </section>
@@ -39,6 +45,7 @@
       </p>
     </article>
 
+    {% if show_billing %}
     <article class="kpi-card">
       <div class="flex items-start justify-between">
         <div>
@@ -77,6 +84,7 @@
       </div>
       <p class="mt-4 text-xs text-slate-400">ហួស Due Date {{ stats.overdue_students }} នាក់ · Unpaid / overdue</p>
     </article>
+    {% endif %}
   </div>
 
   <div class="mt-4 grid gap-4 sm:grid-cols-2">
@@ -96,13 +104,16 @@
     </article>
   </div>
 
+  {% if show_billing %}
   <section id="due-alerts" class="panel mt-6 overflow-hidden scroll-mt-24">
     <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-5">
       <div>
         <h2 class="font-bold text-slate-900">ការជូនដំណឹង Due Date</h2>
         <p class="text-xs text-slate-400">ហួស {{ stats.overdue_students }} នាក់ · ជិតដល់ {{ stats.due_soon_students }} នាក់</p>
       </div>
+      {% if can.manage_settings %}
       <a href="{% url 'core:settings' %}" class="text-sm font-semibold text-brand-700">Telegram →</a>
+      {% endif %}
     </div>
     <div class="grid gap-0 xl:grid-cols-2">
       <div class="overflow-x-auto xl:border-r xl:border-slate-100">
@@ -127,7 +138,9 @@
                 <td>{{ enrollment.course_class.name }}</td>
                 <td><span class="badge badge-voided">{{ enrollment.next_due_date|date:"d/m/Y" }}</span></td>
                 <td class="text-right">
+                  {% if can.collect_payment %}
                   <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
+                  {% endif %}
                 </td>
               </tr>
             {% empty %}
@@ -160,7 +173,9 @@
                 <td>{{ enrollment.course_class.name }}</td>
                 <td><span class="badge badge-suspended">{{ enrollment.next_due_date|date:"d/m/Y" }}</span></td>
                 <td class="text-right">
+                  {% if can.collect_payment %}
                   <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
+                  {% endif %}
                 </td>
               </tr>
             {% empty %}
@@ -173,6 +188,55 @@
       </div>
     </div>
   </section>
+  {% endif %}
+
+  {% if can.view_attendance %}
+  <section class="panel mt-6 overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-5">
+      <div>
+        <h2 class="font-bold text-slate-900">ថ្នាក់សិក្សាថ្ងៃនេះ</h2>
+        <p class="text-xs text-slate-400">ចុះវត្តមានតាមថ្នាក់ដែលមានថ្ងៃសិក្សាថ្ងៃនេះ</p>
+      </div>
+      <a href="{% url 'academics:class_list' %}" class="text-sm font-semibold text-brand-700">គ្រប់ថ្នាក់ →</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="w-16">ល.រ</th>
+            <th>ថ្នាក់</th>
+            <th>វគ្គ</th>
+            <th>ស្ថានភាព</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in attendance_today %}
+            <tr>
+              <td class="text-slate-400">{{ forloop.counter }}</td>
+              <td class="font-semibold">{{ row.course_class.name }}</td>
+              <td>{{ row.course_class.course.name }}</td>
+              <td>
+                {% if row.marked %}
+                  <span class="badge badge-issued">បានចុះ</span>
+                {% else %}
+                  <span class="badge badge-suspended">មិនទាន់ចុះ</span>
+                {% endif %}
+              </td>
+              <td class="text-right">
+                <a href="{{ row.course_class.get_attendance_url }}" class="btn-quiet">{% if can.mark_attendance %}ចុះវត្តមាន{% else %}មើល{% endif %}</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="py-10 text-center text-slate-400">មិនមានថ្នាក់សិក្សាថ្ងៃនេះ។</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
 
   <div class="mt-6 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
     <section class="panel overflow-hidden">
@@ -240,6 +304,7 @@
     </section>
   </div>
 
+  {% if show_billing %}
   <div class="mt-6 grid gap-6 xl:grid-cols-2">
     <section class="panel overflow-hidden">
       <div class="flex items-center justify-between px-6 py-5">
@@ -257,6 +322,7 @@
               <th>សិស្ស</th>
               <th>ថ្នាក់</th>
               <th>Due Date</th>
+              <th>នៅជំពាក់</th>
               <th></th>
             </tr>
           </thead>
@@ -278,13 +344,16 @@
                     <span class="badge badge-suspended">{{ enrollment.next_due_date|date:"d/m/Y" }}</span>
                   {% endif %}
                 </td>
+                <td>{{ enrollment.period_remaining_display|default:"—" }}</td>
                 <td class="text-right">
+                  {% if can.collect_payment %}
                   <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
+                  {% endif %}
                 </td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="5" class="py-12 text-center text-slate-400">មិនទាន់មានសិស្សជំពាក់។</td>
+                <td colspan="6" class="py-12 text-center text-slate-400">មិនទាន់មានសិស្សជំពាក់។</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -335,6 +404,7 @@
       </div>
     </section>
   </div>
+  {% endif %}
   </div>
   </div>
 {% endblock %}

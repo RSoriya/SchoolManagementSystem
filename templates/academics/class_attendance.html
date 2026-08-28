@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block main_overflow %}overflow-hidden{% endblock %}
+
+{% block content %}
+  <div class="page-list">
+    <div class="page-toolbar">
+      <form method="get" class="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+        <a href="{{ course_class.get_absolute_url }}" class="btn-quiet shrink-0">← {{ course_class.name }}</a>
+        <span class="text-sm font-semibold text-slate-500">ពីថ្ងៃ</span>
+        <div class="date-field min-w-0 max-w-56">
+          <label class="sr-only" for="attendance-from">ពីថ្ងៃ</label>
+          <input id="attendance-from" type="date" name="from" value="{{ date_from|date:'Y-m-d' }}" class="form-input">
+        </div>
+        <span class="text-sm font-semibold text-slate-500">ដល់</span>
+        <div class="date-field min-w-0 max-w-56">
+          <label class="sr-only" for="attendance-to">ដល់ថ្ងៃ</label>
+          <input id="attendance-to" type="date" name="to" value="{{ date_to|date:'Y-m-d' }}" class="form-input">
+        </div>
+        <button type="submit" class="btn-secondary">បើក</button>
+        {% include "includes/per_page.html" %}
+      </form>
+      {% if can_mark and attendance_rows.paginator.count %}
+      <button type="submit" form="attendance-mark" class="btn-primary">រក្សាទុកវត្តមាន</button>
+      {% endif %}
+    </div>
+
+    <div class="panel page-list-panel">
+      <form id="attendance-mark" method="post" action="?{{ request.GET.urlencode }}" class="flex min-h-0 flex-1 flex-col">
+        {% csrf_token %}
+        <input type="hidden" name="from" value="{{ date_from|date:'Y-m-d' }}">
+        <input type="hidden" name="to" value="{{ date_to|date:'Y-m-d' }}">
+        <div class="page-list-table">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="w-16">ល.រ</th>
+                <th class="w-1 whitespace-nowrap">ID</th>
+                <th class="min-w-56">ឈ្មោះ</th>
+                <th>ភេទ</th>
+                {% if is_single_day %}
+                  <th>ថ្ងៃទី {{ date_from|date:"d/m/Y" }}</th>
+                {% endif %}
+                <th class="text-center">វត្តមាន</th>
+                <th class="text-center">យឺត</th>
+                <th class="text-center">សុំច្បាប់</th>
+                <th class="text-center">អវត្តមាន</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in attendance_rows %}
+                <tr>
+                  <td class="text-slate-400">{{ forloop.counter0|add:attendance_rows.start_index }}</td>
+                  <td class="whitespace-nowrap font-medium text-slate-500">{{ row.student.student_id }}</td>
+                  <td>
+                    <a href="{{ row.student.get_absolute_url }}" class="font-semibold text-slate-900 hover:text-brand-700">{{ row.student.name_kh }}</a>
+                    {% if row.student.name_en %}<p class="text-sm text-slate-400">{{ row.student.name_en }}</p>{% endif %}
+                  </td>
+                  <td>{{ row.student.get_gender_display }}</td>
+                  {% if is_single_day %}
+                    <td>
+                      <label class="sr-only" for="status-{{ row.enrollment.pk }}">{{ row.student.name_kh }}</label>
+                      <select
+                        id="status-{{ row.enrollment.pk }}"
+                        name="status_{{ row.enrollment.pk }}"
+                        class="table-control"
+                        {% if not can_mark %}disabled{% endif %}
+                      >
+                        <option value="">—</option>
+                        {% for value, label in statuses %}
+                          <option value="{{ value }}" {% if row.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                    </td>
+                  {% endif %}
+                  <td class="text-center font-semibold">{{ row.summary.present }}</td>
+                  <td class="text-center font-semibold">{{ row.summary.late }}</td>
+                  <td class="text-center font-semibold">{{ row.summary.excused }}</td>
+                  <td class="text-center font-semibold">{{ row.summary.absent }}</td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="{% if is_single_day %}9{% else %}8{% endif %}" class="py-16 text-center text-slate-400">មិនមានសិស្សកំពុងរៀនក្នុងថ្នាក់នេះ។</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if attendance_rows.paginator.count %}
+          <nav class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-sm text-slate-500" aria-label="សរុបវត្តមាន">
+            <span>សរុប {{ summary_label }}៖ វត្តមាន {{ counts.present }} · យឺត {{ counts.late }} · សុំច្បាប់ {{ counts.excused }} · អវត្តមាន {{ counts.absent }}</span>
+          </nav>
+          {% include "includes/pagination.html" with page=attendance_rows extra_query=extra_query %}
+        {% endif %}
+      </form>
+    </div>
+  </div>
+{% endblock %}

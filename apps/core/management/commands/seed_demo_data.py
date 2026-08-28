@@ -7,7 +7,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from apps.academics.models import Course, CourseClass, Enrollment
+from apps.academics.attendance import is_study_day
+from apps.academics.models import Assessment, AttendanceRecord, Course, CourseClass, Enrollment, ScoreRecord
 from apps.academics.services import enroll_student, set_enrollment_status, transfer_enrollment
 from apps.billing.models import Payment
 from apps.billing.services import collect_payment, refund_payment, void_payment
@@ -128,7 +129,7 @@ STUDENTS = [
 
 
 class Command(BaseCommand):
-    help = "Insert demo school data (students, classes, enrollments, payments). Safe to run more than once."
+    help = "Insert demo school data (students, classes, enrollments, payments, attendance). Safe to run more than once."
 
     def handle(self, *args, **options):
         today = timezone.localdate()
@@ -146,16 +147,31 @@ class Command(BaseCommand):
             self._statuses(enrollments, admin)
             created_payments = self._payments(enrollments, methods, admin, today)
             self._void_and_refund(created_payments, methods, admin, today)
+            self._attendance(enrollments, admin, today)
+            self._scores(enrollments, admin, today)
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                "បានបញ្ចូលទិន្នន័យឧទាហរណ៍៖ "
-                f"សិស្ស {Student.objects.count()} · "
-                f"ថ្នាក់ {CourseClass.objects.count()} · "
-                f"ចុះឈ្មោះ {Enrollment.objects.count()} · "
-                f"ការបង់ {Payment.objects.count()}"
-            )
+        summary = (
+            "បានបញ្ចូលទិន្នន័យឧទាហរណ៍៖ "
+            f"សិស្ស {Student.objects.count()} · "
+            f"ថ្នាក់ {CourseClass.objects.count()} · "
+            f"ចុះឈ្មោះ {Enrollment.objects.count()} · "
+            f"ការបង់ {Payment.objects.count()} · "
+            f"វត្តមាន {AttendanceRecord.objects.count()} · "
+            f"ពិន្ទុ {ScoreRecord.objects.count()}"
         )
+        try:
+            self.stdout.write(self.style.SUCCESS(summary))
+        except UnicodeEncodeError:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "Demo data loaded: "
+                    f"students {Student.objects.count()} · "
+                    f"classes {CourseClass.objects.count()} · "
+                    f"enrollments {Enrollment.objects.count()} · "
+                    f"payments {Payment.objects.count()} · "
+                    f"attendance {AttendanceRecord.objects.count()}"
+                )
+            )
 
     def _courses(self):
         by_name = {}
@@ -389,3 +405,64 @@ class Command(BaseCommand):
                     )
                 except ValidationError:
                     pass
+
+    def _study_days_back(self, course_class, today, limit=4):
+        days = []
+        cursor = today
+        for _ in range(28):
+            if is_study_day(course_class, cursor):
+                days.append(cursor)
+                if len(days) >= limit:
+                    break
+            cursor -= timedelta(days=1)
+        return days
+
+    def _attendance(self, enrollments, admin, today):
+        active = [row for row in enrollments if row and row.status == Enrollment.Status.ACTIVE]
+        by_class = {}
+        for enrollment in active:
+            by_class.setdefault(enrollment.course_class_id, []).append(enrollment)
+        statuses = (
+            AttendanceRecord.Status.PRESENT,
+            AttendanceRecord.Status.PRESENT,
+            AttendanceRecord.Status.LATE,
+            AttendanceRecord.Status.ABSENT,
+            AttendanceRecord.Status.EXCUSED,
+        )
+        for class_enrollments in by_class.values():
+            course_class = class_enrollments[0].course_class
+            for day_index, attended_on in enumerate(self._study_days_back(course_class, today)):
+                for student_index, enrollment in enumerate(class_enrollments):
+                    status = statuses[(day_index + student_index) % len(statuses)]
+                    AttendanceRecord.objects.update_or_create(
+                        enrollment=enrollment,
+                        attended_on=attended_on,
+                        defaults={
+                            "course_class": course_class,
+                            "student": enrollment.student,
+                            "status": status,
+                            "note": DEMO_NOTE,
+                            "marked_by": admin,
+                        },
+                    )
+
+    def _scores(self, enrollments, admin, today):
+        from apps.academics.scores import save_class_scores
+
+        for course_class in CourseClass.objects.all():
+            active = list(
+                Enrollment.objects.filter(course_class=course_class, status=Enrollment.Status.ACTIVE)
+            )
+            if not active:
+                continue
+            assessment, _created = Assessment.objects.get_or_create(
+                course_class=course_class,
+                name="ប្រឡងកណ្ដាលវគ្គ",
+                assessed_on=today - timedelta(days=7),
+                defaults={"max_score": Decimal("100.00"), "created_by": admin},
+            )
+            marks = {
+                enrollment.pk: str(70 + (index * 5) % 25)
+                for index, enrollment in enumerate(active)
+            }
+            save_class_scores(assessment, marks, user=admin)

@@ -8,8 +8,12 @@
       {% if course.name_kh %}<p class="text-sm text-slate-500">{{ course.name_kh }}</p>{% endif %}
     </div>
     <div class="flex gap-2">
+      {% if can.add_class %}
       <a href="{% url 'academics:class_list' %}?open=add&course={{ course.pk }}" class="btn-primary">+ បន្ថែមថ្នាក់</a>
+      {% endif %}
+      {% if can.change_course %}
       <a href="{% url 'academics:course_list' %}?edit={{ course.pk }}" class="btn-secondary">កែវគ្គ</a>
+      {% endif %}
     </div>
   </div>
 
@@ -37,7 +41,7 @@
             <tr>
               <td class="text-slate-400">{{ forloop.counter }}</td>
               <td><a href="{{ class.get_absolute_url }}" class="font-semibold hover:text-brand-700">{{ class.name }}</a></td>
-              <td>{{ class.instructor_name|default:"—" }}</td>
+              <td>{{ class.instructor_display }}</td>
               <td>{{ class.study_days_display }} · {{ class.study_time_display }}</td>
               <td>{{ class.active_students }}</td>
             </tr>

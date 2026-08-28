@@ -68,6 +68,12 @@
       <p><span class="text-slate-500">លេខយោង៖</span> <strong>{{ payment.transaction_reference }}</strong></p>
     {% endif %}
     <p><span class="text-slate-500">អ្នកទទួល៖</span> <strong>{{ receipt.issued_by_name|default:"—" }}</strong></p>
+    {% if payment.fee_amount is not None %}
+      <p><span class="text-slate-500">ថ្លៃវគ្គ៖</span> <strong>{{ payment.fee_display }}</strong></p>
+    {% endif %}
+    {% if payment.is_partial %}
+      <p><span class="text-slate-500">នៅជំពាក់៖</span> <strong>{{ payment.remaining_display }}</strong></p>
+    {% endif %}
     {% if payment.next_due_date %}
       <p><span class="text-slate-500">Due Date បន្ទាប់៖</span> <strong>{{ payment.next_due_date|date:"d/m/Y" }}</strong></p>
     {% endif %}

@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block main_overflow %}overflow-hidden{% endblock %}
+
+{% block content %}
+  <div
+    class="page-list"
+    {% if can_add %}
+    data-resource-modals
+    data-create-url="{% url 'academics:class_scores' course_class.pk %}"
+    data-add-title="បង្កើតប្រឡង"
+    {% if open_form_modal %}data-open-modal="form"{% endif %}
+    {% endif %}
+  >
+    <div class="page-toolbar">
+      <form method="get" class="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+        <a href="{{ course_class.get_absolute_url }}" class="btn-quiet shrink-0">← {{ course_class.name }}</a>
+        <label class="sr-only" for="score-exam">ប្រឡង</label>
+        <select id="score-exam" name="exam" class="form-input max-w-xs">
+          {% if not assessments %}
+            <option value="">មិនទាន់មានប្រឡង</option>
+          {% endif %}
+          {% for item in assessments %}
+            <option value="{{ item.pk }}" {% if assessment and item.pk == assessment.pk %}selected{% endif %}>
+              {{ item.name }} · {{ item.assessed_on|date:"d/m/Y" }}
+            </option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn-secondary">បើក</button>
+        {% include "includes/per_page.html" %}
+        {% if can_add %}
+        <button type="button" class="btn-secondary" data-add-open>+ បង្កើតប្រឡង</button>
+        {% endif %}
+      </form>
+      {% if can_mark and score_rows.paginator.count %}
+      <button type="submit" form="score-mark" class="btn-primary">រក្សាទុកពិន្ទុ</button>
+      {% endif %}
+    </div>
+
+    <div class="panel page-list-panel">
+      <form id="score-mark" method="post" action="?{{ request.GET.urlencode }}" class="flex min-h-0 flex-1 flex-col">
+        {% csrf_token %}
+        {% if assessment %}
+        <input type="hidden" name="exam" value="{{ assessment.pk }}">
+        {% endif %}
+        <div class="page-list-table">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="w-16">ល.រ</th>
+                <th class="w-1 whitespace-nowrap">ID</th>
+                <th class="min-w-56">ឈ្មោះ</th>
+                <th>ភេទ</th>
+                {% if assessment %}
+                  <th>{{ assessment.name }} · {{ assessment.assessed_on|date:"d/m/Y" }}</th>
+                {% endif %}
+                <th class="text-center">សរុប</th>
+                <th class="text-center">មធ្យម</th>
+                <th>និទ្ទេស</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in score_rows %}
+                <tr>
+                  <td class="text-slate-400">{{ forloop.counter0|add:score_rows.start_index }}</td>
+                  <td class="whitespace-nowrap font-medium text-slate-500">{{ row.student.student_id }}</td>
+                  <td>
+                    <a href="{{ row.student.get_absolute_url }}" class="font-semibold text-slate-900 hover:text-brand-700">{{ row.student.name_kh }}</a>
+                    {% if row.student.name_en %}<p class="text-sm text-slate-400">{{ row.student.name_en }}</p>{% endif %}
+                  </td>
+                  <td>{{ row.student.get_gender_display }}</td>
+                  {% if assessment %}
+                    <td>
+                      <label class="sr-only" for="score-{{ row.enrollment.pk }}">ពិន្ទុ {{ row.student.name_kh }}</label>
+                      <input
+                        id="score-{{ row.enrollment.pk }}"
+                        type="number"
+                        name="score_{{ row.enrollment.pk }}"
+                        value="{{ row.score|default_if_none:'' }}"
+                        min="0"
+                        max="{{ assessment.max_score }}"
+                        step="0.01"
+                        class="table-control"
+                        {% if not can_mark %}disabled{% endif %}
+                      >
+                    </td>
+                  {% endif %}
+                  <td class="text-center font-semibold">
+                    {% if row.total is not None %}{{ row.total }} / {{ row.total_max }}{% else %}—{% endif %}
+                  </td>
+                  <td class="text-center font-semibold">
+                    {% if row.percent is not None %}{{ row.percent }}%{% else %}—{% endif %}
+                  </td>
+                  <td>
+                    {% if row.grade %}
+                      <span class="font-semibold">{{ row.grade.code }}</span>
+                      <span class="text-xs text-slate-500">{{ row.grade.label }}</span>
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="{% if assessment %}8{% else %}7{% endif %}" class="py-16 text-center text-slate-400">
+                    {% if not assessments %}មិនទាន់មានប្រឡង។{% if can_add %} ចុច + បង្កើតប្រឡង។{% endif %}
+                    {% else %}មិនមានសិស្សកំពុងរៀនក្នុងថ្នាក់នេះ។{% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if score_rows.paginator.count %}
+          <nav class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-sm text-slate-500" aria-label="សរុបពិន្ទុ">
+            <span>
+              {% if assessment %}
+                សរុប {{ assessment.name }} · {{ assessment.assessed_on|date:"d/m/Y" }}៖ បានដាក់ {{ marked_count }}/{{ active_count }} · ពិន្ទុពេញ {{ assessment.max_score }}
+              {% else %}
+                មិនទាន់មានប្រឡង
+              {% endif %}
+            </span>
+          </nav>
+          {% include "includes/pagination.html" with page=score_rows extra_query=extra_query %}
+        {% endif %}
+      </form>
+    </div>
+
+    {% if can_add %}
+    <div data-modal="form-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="exam-form-title">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-md">
+        <div class="mb-5 flex items-start justify-between gap-3">
+          <h2 id="exam-form-title" class="text-xl font-bold text-slate-900" data-form-title>បង្កើតប្រឡង</h2>
+          <button type="button" class="btn-quiet" data-modal-close aria-label="បិទ">✕</button>
+        </div>
+        <form method="post" action="{% url 'academics:class_scores' course_class.pk %}" class="grid gap-5" data-resource-form>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+          <p class="text-sm text-rose-600">{{ form.non_field_errors.0 }}</p>
+          {% endif %}
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+            {{ form.name }}
+            {% if form.name.errors %}<p class="mt-1 text-sm text-rose-600">{{ form.name.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="date-field">
+            <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.assessed_on.id_for_label }}">{{ form.assessed_on.label }}</label>
+            {{ form.assessed_on }}
+            {% if form.assessed_on.errors %}<p class="mt-1 text-sm text-rose-600">{{ form.assessed_on.errors.0 }}</p>{% endif %}
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.max_score.id_for_label }}">{{ form.max_score.label }}</label>
+            {{ form.max_score }}
+            {% if form.max_score.errors %}<p class="mt-1 text-sm text-rose-600">{{ form.max_score.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="flex gap-3">
+            <button type="submit" class="btn-primary">បង្កើតប្រឡង</button>
+            <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+{% endblock %}

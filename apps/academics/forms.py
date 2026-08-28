@@ -1,10 +1,11 @@
 from django import forms
 from django.db.models import Q
 
+from apps.accounts.roles import instructor_queryset
 from apps.core.constants import WEEKDAY_CHOICES
 from apps.students.models import Student
 
-from .models import Course, CourseClass, Enrollment
+from .models import Assessment, Course, CourseClass, Enrollment
 
 INPUT_ATTRS = {"class": "form-input"}
 
@@ -37,6 +38,7 @@ class CourseClassForm(forms.ModelForm):
         fields = [
             "course",
             "name",
+            "instructor",
             "instructor_name",
             "start_date",
             "end_date",
@@ -48,6 +50,7 @@ class CourseClassForm(forms.ModelForm):
         widgets = {
             "course": forms.Select(attrs=INPUT_ATTRS),
             "name": forms.TextInput(attrs=INPUT_ATTRS),
+            "instructor": forms.Select(attrs=INPUT_ATTRS),
             "instructor_name": forms.TextInput(attrs=INPUT_ATTRS),
             "start_date": forms.DateInput(attrs={**INPUT_ATTRS, "type": "date"}, format="%Y-%m-%d"),
             "end_date": forms.DateInput(attrs={**INPUT_ATTRS, "type": "date"}, format="%Y-%m-%d"),
@@ -61,6 +64,9 @@ class CourseClassForm(forms.ModelForm):
         if self.instance.pk and self.instance.course_id:
             queryset = Course.objects.filter(Q(is_active=True) | Q(pk=self.instance.course_id))
         self.fields["course"].queryset = queryset.order_by("name")
+        self.fields["instructor"].queryset = instructor_queryset()
+        self.fields["instructor"].required = False
+        self.fields["instructor"].empty_label = "— ជ្រើសគណនីគ្រូ —"
         if self.instance.pk:
             self.fields["study_days"].initial = self.instance.study_days
         for name in ("start_date", "end_date"):
@@ -71,6 +77,11 @@ class CourseClassForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.study_days = [int(day) for day in self.cleaned_data["study_days"]]
+        instructor = self.cleaned_data.get("instructor")
+        if instructor and not (self.cleaned_data.get("instructor_name") or "").strip():
+            instance.instructor_name = (
+                instructor.full_name_kh or instructor.get_full_name() or instructor.username
+            )
         if commit:
             instance.save()
         return instance
@@ -126,6 +137,26 @@ class EnrollIntoClassForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs=INPUT_ATTRS),
     )
+
+
+class AssessmentForm(forms.ModelForm):
+    class Meta:
+        model = Assessment
+        fields = ["name", "assessed_on", "max_score"]
+        widgets = {
+            "name": forms.TextInput(attrs={**INPUT_ATTRS, "placeholder": "ឧ. ប្រឡងកណ្ដាលវគ្គ"}),
+            "assessed_on": forms.DateInput(attrs={**INPUT_ATTRS, "type": "date"}, format="%Y-%m-%d"),
+            "max_score": forms.NumberInput(attrs={**INPUT_ATTRS, "step": "0.01", "min": "0.01"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["assessed_on"].input_formats = ["%Y-%m-%d"]
+        self.fields["max_score"].initial = self.fields["max_score"].initial or 100
+        if not self.is_bound and not self.initial.get("assessed_on"):
+            from django.utils import timezone
+
+            self.fields["assessed_on"].initial = timezone.localdate()
 
 
 class TransferEnrollmentForm(forms.Form):

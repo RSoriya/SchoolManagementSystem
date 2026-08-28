@@ -1,3 +1,4 @@
+from collections import defaultdict
 from calendar import monthrange
 from datetime import date, timedelta
 from decimal import Decimal, ROUND_HALF_UP
@@ -31,6 +32,28 @@ def month_bounds(when=None):
     return start, end, label
 
 
+def add_calendar_month(when, months=1):
+    """Advance a date by calendar months, clamping the day (31 Jan → 28/29 Feb)."""
+    month_index = when.month - 1 + months
+    year = when.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(when.day, monthrange(year, month)[1])
+    return date(year, month, day)
+
+
+def monthly_schedule(enrollment, paid_on=None):
+    """Period covered by this payment, and the suggested next due date."""
+    paid_on = paid_on or timezone.localdate()
+    anchor = enrollment.next_due_date or paid_on
+    start, end, label = month_bounds(anchor)
+    return {
+        "period_start": start,
+        "period_end": end,
+        "period_label": label,
+        "next_due_date": add_calendar_month(anchor, 1),
+    }
+
+
 def compute_payment_total(tuition, registration_fee, late_fee, discount, scholarship):
     tuition = _quantize(tuition)
     registration_fee = _quantize(registration_fee)
@@ -45,8 +68,108 @@ def compute_payment_total(tuition, registration_fee, late_fee, discount, scholar
         raise ValidationError("បញ្ចុះតម្លៃ និងអាហារូបករមិនអាចលើសថ្លៃសរុបបានទេ។")
     total = gross - reductions
     if total <= 0:
-        raise ValidationError("ចំនួនបង់សរុបត្រូវធំជាង 0។ មិនអនុញ្ញាតបង់ផ្នែកខ្លះ ឬបង់ 0។")
+        raise ValidationError("ចំនួនបង់សរុបត្រូវធំជាង 0។")
     return total
+
+
+def billing_period(enrollment, paid_on=None):
+    """The open billing period for this enrollment."""
+    course = enrollment.course_class.course
+    if course.fee_type == Course.FeeType.MONTHLY:
+        return monthly_schedule(enrollment, paid_on)
+    return {
+        "period_start": enrollment.course_class.start_date,
+        "period_end": enrollment.course_class.end_date,
+        "period_label": course.get_fee_type_display(),
+        "next_due_date": None,
+    }
+
+
+def period_tuition_paid(enrollment, period_start):
+    qs = Payment.objects.filter(
+        enrollment_id=enrollment.pk,
+        status=Payment.Status.COMPLETED,
+    )
+    if enrollment.course_class.course.fee_type == Course.FeeType.MONTHLY:
+        if period_start is None:
+            qs = qs.filter(period_start__isnull=True)
+        else:
+            qs = qs.filter(period_start=period_start)
+    return qs.aggregate(total=Sum("tuition_amount"))["total"] or ZERO
+
+
+def period_balance(enrollment, *, paid_on=None, period_start=None):
+    course = enrollment.course_class.course
+    period = billing_period(enrollment, paid_on)
+    if period_start is None:
+        period_start = period["period_start"]
+        period_end = period["period_end"]
+        period_label = period["period_label"]
+    elif period_start == period["period_start"]:
+        period_end = period["period_end"]
+        period_label = period["period_label"]
+    elif period_start:
+        _start, period_end, period_label = month_bounds(period_start)
+    else:
+        period_end = period["period_end"]
+        period_label = period["period_label"]
+    fee = _quantize(course.default_fee)
+    paid = _quantize(period_tuition_paid(enrollment, period_start))
+    remaining = fee - paid
+    if remaining < ZERO:
+        remaining = ZERO
+    return {
+        "fee": fee,
+        "paid": paid,
+        "remaining": remaining,
+        "period_start": period_start,
+        "period_end": period_end,
+        "period_label": period_label,
+        "currency": course.currency,
+    }
+
+
+def attach_period_balances(enrollments, today=None):
+    rows = list(enrollments)
+    if not rows:
+        return rows
+    ids = [row.pk for row in rows]
+    paid_map = defaultdict(lambda: ZERO)
+    payments = Payment.objects.filter(
+        enrollment_id__in=ids,
+        status=Payment.Status.COMPLETED,
+    ).values("enrollment_id", "period_start", "tuition_amount")
+    fee_types = {row.pk: row.course_class.course.fee_type for row in rows}
+    for payment in payments:
+        key_period = (
+            payment["period_start"]
+            if fee_types.get(payment["enrollment_id"]) == Course.FeeType.MONTHLY
+            else None
+        )
+        paid_map[(payment["enrollment_id"], key_period)] += payment["tuition_amount"] or ZERO
+    for enrollment in rows:
+        period = billing_period(enrollment, today)
+        course = enrollment.course_class.course
+        fee = _quantize(course.default_fee)
+        key_period = period["period_start"] if course.fee_type == Course.FeeType.MONTHLY else None
+        paid = _quantize(paid_map.get((enrollment.pk, key_period), ZERO))
+        remaining = fee - paid
+        if remaining < ZERO:
+            remaining = ZERO
+        enrollment.period_fee = fee
+        enrollment.period_paid = paid
+        enrollment.period_remaining = remaining
+        enrollment.period_fee_display = format_money(fee, course.currency)
+        enrollment.period_paid_display = format_money(paid, course.currency)
+        enrollment.period_remaining_display = format_money(remaining, course.currency)
+    return rows
+
+
+def _limit_to_outstanding(queryset, today=None):
+    outstanding_ids = [
+        row.pk for row in attach_period_balances(queryset, today) if row.period_remaining > 0
+    ]
+    return queryset.filter(pk__in=outstanding_ids)
 
 
 def payable_enrollments():
@@ -59,20 +182,24 @@ def payable_enrollments():
 
 def unpaid_enrollments(today=None):
     today = today or timezone.localdate()
-    return (
+    return _limit_to_outstanding(
         Enrollment.objects.filter(status=Enrollment.Status.ACTIVE)
         .filter(Q(next_due_date__isnull=True) | Q(next_due_date__lte=today))
         .select_related("student", "course_class__course")
-        .order_by("next_due_date", "student__name_kh")
+        .order_by("next_due_date", "student__name_kh"),
+        today,
     )
 
 
 def overdue_enrollments(today=None):
     today = today or timezone.localdate()
-    return Enrollment.objects.filter(
-        status=Enrollment.Status.ACTIVE,
-        next_due_date__lt=today,
-    ).select_related("student", "course_class__course")
+    return _limit_to_outstanding(
+        Enrollment.objects.filter(
+            status=Enrollment.Status.ACTIVE,
+            next_due_date__lt=today,
+        ).select_related("student", "course_class__course"),
+        today,
+    )
 
 
 def due_soon_enrollments(today=None, days=None):
@@ -80,10 +207,13 @@ def due_soon_enrollments(today=None, days=None):
     if days is None:
         days = get_school_settings().reminder_days_before_due or 3
     target = today + timedelta(days=int(days))
-    return Enrollment.objects.filter(
-        status=Enrollment.Status.ACTIVE,
-        next_due_date=target,
-    ).select_related("student", "course_class__course")
+    return _limit_to_outstanding(
+        Enrollment.objects.filter(
+            status=Enrollment.Status.ACTIVE,
+            next_due_date=target,
+        ).select_related("student", "course_class__course"),
+        today,
+    )
 
 
 def completed_payments():
@@ -182,7 +312,6 @@ def collect_payment(
     if not method.requires_reference:
         transaction_reference = ""
 
-    course = enrollment.course_class.course
     total = compute_payment_total(
         tuition_amount,
         registration_fee,
@@ -190,8 +319,6 @@ def collect_payment(
         discount_amount,
         scholarship_amount,
     )
-    if course.fee_type == Course.FeeType.MONTHLY and not next_due_date:
-        raise ValidationError("សូមកំណត់ Due Date បន្ទាប់ បន្ទាប់ពីបង់ថ្លៃប្រចាំខែ។")
 
     school = get_school_settings()
     with transaction.atomic():
@@ -201,6 +328,28 @@ def collect_payment(
             .get(pk=enrollment.pk)
         )
         course = enrollment.course_class.course
+        if course.fee_type == Course.FeeType.MONTHLY:
+            suggestion = monthly_schedule(enrollment, paid_on)
+            period_start = period_start or suggestion["period_start"]
+            period_end = period_end or suggestion["period_end"]
+            period_label = period_label or suggestion["period_label"]
+        else:
+            period_start = period_start or enrollment.course_class.start_date
+            period_end = period_end or enrollment.course_class.end_date
+            period_label = period_label or course.get_fee_type_display()
+
+        balance = period_balance(enrollment, paid_on=paid_on, period_start=period_start)
+        tuition = _quantize(tuition_amount)
+        if tuition > balance["remaining"]:
+            raise ValidationError(
+                f"ថ្លៃសិក្សាលើសចំនួននៅជំពាក់ ({format_money(balance['remaining'], course.currency)})។"
+            )
+        remaining_after = _quantize(balance["remaining"] - tuition)
+        if remaining_after > ZERO:
+            next_due_date = enrollment.next_due_date
+        elif course.fee_type == Course.FeeType.MONTHLY:
+            next_due_date = next_due_date or monthly_schedule(enrollment, paid_on)["next_due_date"]
+
         payment = Payment.objects.create(
             enrollment=enrollment,
             student=enrollment.student,
@@ -213,6 +362,8 @@ def collect_payment(
             discount_amount=_quantize(discount_amount),
             scholarship_amount=_quantize(scholarship_amount),
             total_amount=total,
+            fee_amount=balance["fee"],
+            balance_after=remaining_after,
             method=method,
             transaction_reference=(transaction_reference or "").strip(),
             period_type=course.fee_type,
@@ -242,9 +393,14 @@ def collect_payment(
         )
         enrollment.next_due_date = next_due_date
         enrollment.save(update_fields=["next_due_date", "updated_at"])
+        remaining_note = (
+            f" · នៅជំពាក់ {format_money(remaining_after, course.currency)}"
+            if remaining_after > ZERO
+            else ""
+        )
         log_event(
             action=AuditEvent.Action.PAYMENT_COLLECTED,
-            summary=f"ទទួលបង់ {payment.total_display} · {enrollment.student}",
+            summary=f"ទទួលបង់ {payment.total_display}{remaining_note} · {enrollment.student}",
             user=user,
             obj=payment,
         )
@@ -323,18 +479,27 @@ def refund_payment(payment, *, method, reason, refunded_on=None, user=None):
 def enrollment_payload(enrollment, today=None):
     today = today or timezone.localdate()
     course = enrollment.course_class.course
+    balance = period_balance(enrollment, paid_on=today)
     if course.fee_type == Course.FeeType.MONTHLY:
-        start, end, label = month_bounds(today)
+        suggestion = monthly_schedule(enrollment, today)
+        start = suggestion["period_start"]
+        end = suggestion["period_end"]
+        label = suggestion["period_label"]
+        next_due = suggestion["next_due_date"]
     else:
-        start = enrollment.course_class.start_date
-        end = enrollment.course_class.end_date
-        label = course.get_fee_type_display()
+        start = balance["period_start"]
+        end = balance["period_end"]
+        label = balance["period_label"]
+        next_due = None
     return {
         "id": enrollment.pk,
         "currency": course.currency,
-        "fee": str(course.default_fee),
+        "fee": str(balance["fee"]),
+        "paid": str(balance["paid"]),
+        "remaining": str(balance["remaining"]),
         "fee_type": course.fee_type,
         "due": enrollment.next_due_date.isoformat() if enrollment.next_due_date else "",
+        "next_due": next_due.isoformat() if next_due else "",
         "period_start": start.isoformat() if start else "",
         "period_end": end.isoformat() if end else "",
         "period_label": label,
@@ -342,5 +507,7 @@ def enrollment_payload(enrollment, today=None):
         "student_id": enrollment.student.student_id,
         "course": course.name,
         "class_name": enrollment.course_class.name,
-        "money": format_money(course.default_fee, course.currency),
+        "money": format_money(balance["fee"], course.currency),
+        "money_paid": format_money(balance["paid"], course.currency),
+        "money_remaining": format_money(balance["remaining"], course.currency),
     }

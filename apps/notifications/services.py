@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import log_event
-from apps.billing.services import due_soon_enrollments, overdue_enrollments
+from apps.billing.services import due_soon_enrollments, overdue_enrollments, period_balance
 from apps.core.constants import format_money
 from apps.core.services import get_school_settings
 
@@ -57,12 +57,15 @@ def _format_alert(enrollment, kind, school, days):
     student = enrollment.student
     status = "ហួស Due Date" if kind == NotificationLog.Kind.OVERDUE else f"ជិតដល់ Due Date ({days} ថ្ងៃ)"
     fee = format_money(enrollment.course_class.course.default_fee, enrollment.course_class.course.currency)
+    remaining = period_balance(enrollment)
+    remaining_display = format_money(remaining["remaining"], remaining["currency"])
     return (
         f"{school.school_name}\n"
         f"ជូនដំណឹងថ្លៃសិក្សា · {status}\n"
         f"សិស្ស៖ {student.name_kh} ({student.student_id})\n"
         f"ថ្នាក់៖ {enrollment.course_class.name}\n"
         f"ថ្លៃវគ្គ៖ {fee}\n"
+        f"នៅជំពាក់៖ {remaining_display}\n"
         f"Due Date៖ {due}"
     )
 

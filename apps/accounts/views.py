@@ -16,7 +16,8 @@ from .forms import AdminAuthenticationForm, AdminUserForm
 from .models import User
 from .payloads import user_payload
 from .permissions import admin_required
-from .services import can_deactivate, ensure_admin_group
+from .roles import ROLE_LABELS, ensure_staff_role, user_role
+from .services import can_deactivate
 
 
 def _client_ip(request):
@@ -62,13 +63,13 @@ class ThrottledLoginView(LoginView):
 
     def form_valid(self, form):
         cache.delete(self._throttle_key())
-        ensure_admin_group(form.get_user())
+        ensure_staff_role(form.get_user())
         return super().form_valid(form)
 
 
 def _user_list_response(request, form=None, open_form_modal=False):
     query = request.GET.get("q", "").strip()
-    users = User.objects.order_by("username")
+    users = User.objects.prefetch_related("groups").order_by("username")
     if query:
         users = users.filter(
             Q(username__icontains=query)
@@ -77,6 +78,9 @@ def _user_list_response(request, form=None, open_form_modal=False):
             | Q(email__icontains=query)
         )
     page = paginate(request, users)
+    for item in page.object_list:
+        item.role_name = user_role(item)
+        item.role_label = ROLE_LABELS.get(item.role_name, "")
     return render(
         request,
         "accounts/list.html",
@@ -107,7 +111,6 @@ def user_create(request):
     form = AdminUserForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.save()
-        ensure_admin_group(user)
         log_event(
             action=AuditEvent.Action.USER_CREATED,
             summary=f"បង្កើតអ្នកប្រើ {user.username}",
@@ -141,7 +144,6 @@ def user_edit(request, pk):
             form.add_error("is_active", "មិនអាចផ្អាកគណនីនេះបានទេ។")
         if not form.errors:
             user = form.save()
-            ensure_admin_group(user)
             log_event(
                 action=AuditEvent.Action.USER_UPDATED,
                 summary=f"កែអ្នកប្រើ {user.username}",

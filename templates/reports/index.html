@@ -59,5 +59,14 @@
       </div>
       <span class="text-sm font-semibold text-brand-700">មើល →</span>
     </a>
+    {% if can.view_attendance %}
+    <a href="{% url 'reports:detail' 'attendance' %}{{ month_query }}" class="panel flex items-center justify-between p-5 hover:border-brand-100 sm:col-span-2">
+      <div>
+        <p class="font-bold text-slate-900">របាយការណ៍វត្តមាន</p>
+        <p class="mt-1 text-sm text-slate-500">វត្តមាន · យឺត · សុំច្បាប់ · អវត្តមាន តាមសិស្ស និងថ្នាក់</p>
+      </div>
+      <span class="text-sm font-semibold text-brand-700">មើល →</span>
+    </a>
+    {% endif %}
   </div>
 {% endblock %}

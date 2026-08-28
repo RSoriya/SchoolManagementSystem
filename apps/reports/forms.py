@@ -13,6 +13,7 @@ REPORT_KINDS = {
     "unpaid": "សិស្សមិនទាន់បង់",
     "overdue": "សិស្សហួស Due Date",
     "refunds": "ការសងប្រាក់",
+    "attendance": "វត្តមាន",
 }
 
 SNAPSHOT_KINDS = {"unpaid", "overdue"}
@@ -91,6 +92,10 @@ class ReportFilterForm(forms.Form):
             self.fields.pop("status")
         elif kind == "refunds":
             self.fields.pop("status")
+        elif kind == "attendance":
+            self.fields.pop("method")
+            self.fields.pop("status")
+            self.fields.pop("currency")
 
     def clean(self):
         cleaned = super().clean()

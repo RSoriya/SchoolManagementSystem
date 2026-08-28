@@ -9,6 +9,7 @@ def class_payload(course_class):
     return {
         "course": str(course_class.course_id),
         "name": course_class.name,
+        "instructor": str(course_class.instructor_id or ""),
         "instructor_name": course_class.instructor_name,
         "start_date": course_class.start_date.isoformat() if course_class.start_date else "",
         "end_date": course_class.end_date.isoformat() if course_class.end_date else "",

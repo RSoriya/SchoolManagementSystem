@@ -39,6 +39,8 @@ class Payment(models.Model):
     discount_amount = models.DecimalField("បញ្ចុះតម្លៃ", max_digits=12, decimal_places=2, default=0)
     scholarship_amount = models.DecimalField("អាហារូបករ", max_digits=12, decimal_places=2, default=0)
     total_amount = models.DecimalField("សរុប", max_digits=12, decimal_places=2)
+    fee_amount = models.DecimalField("ថ្លៃវគ្គនៃរយៈពេល", max_digits=12, decimal_places=2, null=True, blank=True)
+    balance_after = models.DecimalField("នៅជំពាក់បន្ទាប់ពីបង់", max_digits=12, decimal_places=2, null=True, blank=True)
     method = models.ForeignKey(
         "core.PaymentMethod",
         on_delete=models.PROTECT,
@@ -107,6 +109,22 @@ class Payment(models.Model):
     @property
     def is_refunded(self):
         return self.status == self.Status.REFUNDED
+
+    @property
+    def is_partial(self):
+        return self.balance_after is not None and self.balance_after > 0
+
+    @property
+    def remaining_display(self):
+        if self.balance_after is None:
+            return ""
+        return format_money(self.balance_after, self.currency)
+
+    @property
+    def fee_display(self):
+        if self.fee_amount is None:
+            return ""
+        return format_money(self.fee_amount, self.currency)
 
     @property
     def total_display(self):

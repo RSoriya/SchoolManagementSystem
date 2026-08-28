@@ -22,7 +22,7 @@
       <button type="button" class="btn-primary" data-add-open>+ បន្ថែមអ្នកប្រើ</button>
     </div>
 
-    <p class="mb-4 shrink-0 text-sm text-slate-500">V1 មានតួនាទី Admin តែប៉ុណ្ណោះ។ ផ្អាកគណនី មិនលុបប្រវត្តិ។</p>
+    <p class="mb-4 shrink-0 text-sm text-slate-500">ជ្រើសតួនាទី Admin · អ្នកគិតលុយ · គ្រូ។ ផ្អាកគណនី មិនលុបប្រវត្តិ។</p>
 
     <div class="panel page-list-panel">
       <div class="page-list-table">
@@ -32,6 +32,7 @@
               <th class="w-16">ល.រ</th>
               <th>ឈ្មោះ</th>
               <th>អ្នកប្រើ</th>
+              <th>តួនាទី</th>
               <th>ទូរសព្ទ</th>
               <th>ស្ថានភាព</th>
               <th class="text-right">សកម្មភាព</th>
@@ -43,6 +44,7 @@
                 <td class="text-slate-400">{{ forloop.counter0|add:users.start_index }}</td>
                 <td class="font-semibold">{{ account.full_name_kh|default:account.username }}</td>
                 <td>{{ account.username }}</td>
+                <td>{{ account.role_label|default:"—" }}</td>
                 <td>{{ account.phone_number|default:"—" }}</td>
                 <td>
                   {% if account.is_active %}
@@ -62,7 +64,7 @@
               </tr>
             {% empty %}
               <tr>
-                <td colspan="6" class="py-16 text-center text-slate-400">មិនមានអ្នកប្រើ។</td>
+                <td colspan="7" class="py-16 text-center text-slate-400">មិនមានអ្នកប្រើ។</td>
               </tr>
             {% endfor %}
           </tbody>

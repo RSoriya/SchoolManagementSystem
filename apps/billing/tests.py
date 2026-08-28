@@ -93,9 +93,88 @@ class BillingTests(TestCase):
         with self.assertRaises(ValidationError):
             self._pay(tuition_amount=Decimal("10.00"), discount_amount=Decimal("10.00"))
 
-    def test_monthly_requires_next_due_date(self):
+    def test_monthly_auto_sets_next_due_date(self):
+        payment = self._pay(next_due_date=None)
+        self.enrollment.refresh_from_db()
+        self.assertEqual(payment.next_due_date, date(2026, 9, 1))
+        self.assertEqual(self.enrollment.next_due_date, date(2026, 9, 1))
+        self.assertEqual(payment.period_start, date(2026, 8, 1))
+        self.assertEqual(payment.period_end, date(2026, 8, 31))
+
+    def test_monthly_uses_paid_on_when_enrollment_has_no_due(self):
+        self.enrollment.next_due_date = None
+        self.enrollment.save(update_fields=["next_due_date", "updated_at"])
+        payment = self._pay(
+            paid_on=date(2026, 8, 15),
+            next_due_date=None,
+            period_start=None,
+            period_end=None,
+            period_label="",
+        )
+        self.assertEqual(payment.next_due_date, date(2026, 9, 15))
+        self.assertEqual(payment.period_start, date(2026, 8, 1))
+        self.assertEqual(payment.period_end, date(2026, 8, 31))
+        self.assertEqual(payment.period_label, "សីហា 2026")
+
+    def test_monthly_second_payment_advances_another_month(self):
+        self._pay(next_due_date=None)
+        payment = self._pay(next_due_date=None, period_start=None, period_end=None, period_label="")
+        self.enrollment.refresh_from_db()
+        self.assertEqual(payment.period_start, date(2026, 9, 1))
+        self.assertEqual(payment.period_end, date(2026, 9, 30))
+        self.assertEqual(payment.next_due_date, date(2026, 10, 1))
+        self.assertEqual(self.enrollment.next_due_date, date(2026, 10, 1))
+
+    def test_monthly_manual_next_due_wins(self):
+        chosen = date(2026, 10, 15)
+        payment = self._pay(next_due_date=chosen)
+        self.enrollment.refresh_from_db()
+        self.assertEqual(payment.next_due_date, chosen)
+        self.assertEqual(self.enrollment.next_due_date, chosen)
+
+    def test_add_calendar_month_clamps_month_end(self):
+        from apps.billing.services import add_calendar_month
+
+        self.assertEqual(add_calendar_month(date(2026, 1, 31)), date(2026, 2, 28))
+        self.assertEqual(add_calendar_month(date(2026, 8, 1)), date(2026, 9, 1))
+
+    def test_partial_payment_keeps_due_date_and_remaining(self):
+        payment = self._pay(tuition_amount=Decimal("10.00"), next_due_date=None)
+        self.enrollment.refresh_from_db()
+        self.assertEqual(payment.total_amount, Decimal("10.00"))
+        self.assertEqual(payment.balance_after, Decimal("20.00"))
+        self.assertTrue(payment.is_partial)
+        self.assertEqual(self.enrollment.next_due_date, date(2026, 8, 1))
+        self.assertEqual(payment.next_due_date, date(2026, 8, 1))
+
+    def test_completing_partial_advances_monthly_due(self):
+        self._pay(tuition_amount=Decimal("10.00"), next_due_date=None)
+        payment = self._pay(tuition_amount=Decimal("20.00"), next_due_date=None)
+        self.enrollment.refresh_from_db()
+        self.assertEqual(payment.balance_after, Decimal("0.00"))
+        self.assertFalse(payment.is_partial)
+        self.assertEqual(self.enrollment.next_due_date, date(2026, 9, 1))
+
+    def test_cannot_pay_more_than_remaining(self):
+        self._pay(tuition_amount=Decimal("10.00"), next_due_date=None)
         with self.assertRaises(ValidationError):
-            self._pay(next_due_date=None)
+            self._pay(tuition_amount=Decimal("25.00"), next_due_date=None)
+
+    def test_void_partial_restores_remaining(self):
+        from apps.billing.services import period_balance
+
+        payment = self._pay(tuition_amount=Decimal("10.00"), next_due_date=None)
+        void_payment(payment, user=self.user, reason="បញ្ចូលខុស")
+        balance = period_balance(self.enrollment)
+        self.assertEqual(balance["remaining"], Decimal("30.00"))
+        self.enrollment.refresh_from_db()
+        self.assertEqual(self.enrollment.next_due_date, date(2026, 8, 1))
+
+    def test_payment_form_payload_includes_remaining(self):
+        self._pay(tuition_amount=Decimal("10.00"), next_due_date=None)
+        response = self.client.get(reverse("billing:payment_create"))
+        self.assertContains(response, '"remaining": "20.00"')
+        self.assertContains(response, "នៅជំពាក់")
 
     def test_payment_and_receipt_cannot_be_deleted(self):
         payment = self._pay()
@@ -141,13 +220,26 @@ class BillingTests(TestCase):
                 "scholarship_amount": "0",
                 "method": self.cash.pk,
                 "period_label": "សីហា 2026",
-                "next_due_date": (today + timedelta(days=30)).isoformat(),
             },
         )
         payment = Payment.objects.get()
         self.assertRedirects(response, payment.receipt.get_absolute_url())
         year = today.year
         self.assertEqual(payment.receipt.receipt_number, f"RCP-{year}-000001")
+        self.assertEqual(payment.next_due_date, date(2026, 9, 1))
+
+    def test_payment_form_payload_includes_suggested_next_due(self):
+        response = self.client.get(reverse("billing:payment_create"))
+        self.assertContains(response, '"next_due": "2026-09-01"')
+        self.assertContains(response, "បង់ផ្នែកខ្លះ នៅ Due Date ដដែល")
+
+    def test_payment_form_prefills_next_due_from_enrollment(self):
+        response = self.client.get(
+            reverse("billing:payment_create"),
+            {"enrollment": self.enrollment.pk},
+        )
+        self.assertContains(response, 'name="next_due_date"')
+        self.assertContains(response, 'value="2026-09-01"')
 
     def test_payment_list_has_serial_and_collect_button(self):
         self._pay()

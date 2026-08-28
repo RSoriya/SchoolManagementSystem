@@ -22,7 +22,9 @@
         {% include "includes/per_page.html" %}
         <button type="submit" class="btn-secondary">ស្វែងរក</button>
       </form>
+      {% if can.collect_payment %}
       <a href="{% url 'billing:payment_create' %}" class="btn-primary">+ ទទួលបង់ប្រាក់</a>
+      {% endif %}
     </div>
 
     <div class="panel page-list-panel">
@@ -65,6 +67,8 @@
                     <span class="badge badge-voided">បានលុបចោល</span>
                   {% elif payment.is_refunded %}
                     <span class="badge badge-refunded">បានសងប្រាក់</span>
+                  {% elif payment.is_partial %}
+                    <span class="badge badge-suspended">ផ្នែកខ្លះ · នៅជំពាក់ {{ payment.remaining_display }}</span>
                   {% else %}
                     <span class="badge badge-issued">បានបង់</span>
                   {% endif %}
@@ -75,8 +79,12 @@
                       <a href="{{ payment.receipt.get_absolute_url }}" class="btn-quiet">បង្កាន់ដៃ</a>
                     {% endif %}
                     {% if payment.status == "completed" %}
+                      {% if can.refund_payment %}
                       <button type="button" class="btn-secondary px-3 py-1.5 text-sm" data-refund-id="{{ payment.pk }}">សងប្រាក់</button>
+                      {% endif %}
+                      {% if can.void_payment %}
                       <button type="button" class="btn-danger" data-void-id="{{ payment.pk }}">លុបចោល</button>
+                      {% endif %}
                     {% endif %}
                   </div>
                 </td>

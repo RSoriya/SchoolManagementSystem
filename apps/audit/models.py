@@ -22,6 +22,8 @@ class AuditEvent(models.Model):
         BACKUP_CREATED = "backup.created", "បម្រុងទុកទិន្នន័យ"
         TELEGRAM_SENT = "telegram.sent", "ផ្ញើ Telegram"
         TELEGRAM_FAILED = "telegram.failed", "Telegram បរាជ័យ"
+        ATTENDANCE_MARKED = "attendance.marked", "ចុះវត្តមាន"
+        SCORE_MARKED = "score.marked", "ដាក់ពិន្ទុ"
 
     created_at = models.DateTimeField("ពេលវេលា", auto_now_add=True)
     actor = models.ForeignKey(

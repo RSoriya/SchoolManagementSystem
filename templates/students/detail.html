@@ -14,7 +14,9 @@
         <p class="text-sm text-slate-500">{{ student.name_en }} · {{ student.get_gender_display }}</p>
       </div>
     </div>
+    {% if can.change_student %}
     <a href="{% url 'students:list' %}?edit={{ student.pk }}" class="btn-secondary">កែព័ត៌មាន</a>
+    {% endif %}
   </div>
 
   <div class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
@@ -29,6 +31,7 @@
       </dl>
     </section>
 
+    {% if can.enroll_student %}
     <section class="panel p-6">
       <h3 class="mb-4 font-bold text-slate-900">ចុះឈ្មោះថ្នាក់ថ្មី</h3>
       <form method="post" action="{% url 'students:enroll' student.student_id %}" class="space-y-4">
@@ -48,6 +51,7 @@
         <button type="submit" class="btn-primary" {% if not can_enroll %}disabled{% endif %}>ចុះឈ្មោះ</button>
       </form>
     </section>
+    {% endif %}
   </div>
 
   <section class="panel mt-6 overflow-hidden">
@@ -64,6 +68,7 @@
             <th>វគ្គ</th>
             <th>ថ្ងៃចុះឈ្មោះ</th>
             <th>Due Date</th>
+            <th>នៅជំពាក់</th>
             <th>ស្ថានភាព</th>
             <th></th>
           </tr>
@@ -78,11 +83,21 @@
               <td>{{ enrollment.course_class.course.name }}</td>
               <td>{{ enrollment.enrolled_on|date:"d/m/Y" }}</td>
               <td>{{ enrollment.next_due_date|date:"d/m/Y"|default:"—" }}</td>
+              <td>
+                {% if enrollment.period_remaining > 0 %}
+                  <span class="font-semibold">{{ enrollment.period_remaining_display }}</span>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
               <td><span class="badge badge-{{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
               <td>
                 {% if enrollment.status == "active" %}
                   <div class="flex flex-wrap justify-end gap-1">
+                    {% if can.collect_payment %}
                     <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">ទទួលបង់</a>
+                    {% endif %}
+                    {% if can.change_enrollment %}
                     <a href="{% url 'students:transfer' student.student_id enrollment.pk %}" class="btn-quiet">ផ្ទេរ</a>
                     <form method="post" action="{% url 'students:change_status' student.student_id enrollment.pk 'suspend' %}" onsubmit="return confirm('ផ្អាកការសិក្សានេះ?');">
                       {% csrf_token %}
@@ -96,10 +111,14 @@
                       {% csrf_token %}
                       <button class="btn-danger" type="submit">បោះបង់</button>
                     </form>
+                    {% endif %}
                   </div>
                 {% elif enrollment.status == "suspended" %}
                   <div class="flex flex-wrap justify-end gap-1">
+                    {% if can.collect_payment %}
                     <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">ទទួលបង់</a>
+                    {% endif %}
+                    {% if can.change_enrollment %}
                     <form method="post" action="{% url 'students:change_status' student.student_id enrollment.pk 'resume' %}">
                       {% csrf_token %}
                       <button class="btn-quiet" type="submit">បន្តរៀន</button>
@@ -108,13 +127,14 @@
                       {% csrf_token %}
                       <button class="btn-danger" type="submit">បោះបង់</button>
                     </form>
+                    {% endif %}
                   </div>
                 {% endif %}
               </td>
             </tr>
           {% empty %}
             <tr>
-              <td colspan="7" class="py-10 text-center text-slate-500">មិនទាន់មានប្រវត្តិចុះឈ្មោះ។</td>
+              <td colspan="8" class="py-10 text-center text-slate-500">មិនទាន់មានប្រវត្តិចុះឈ្មោះ។</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -122,13 +142,117 @@
     </div>
   </section>
 
+  {% if can.view_attendance %}
+  <section class="panel mt-6 overflow-hidden">
+    <div class="border-b border-slate-100 px-5 py-4">
+      <h3 class="font-bold text-slate-900">ប្រវត្តិវត្តមាន</h3>
+      <p class="text-xs text-slate-500">
+        វត្តមាន {{ attendance_counts.present }} · យឺត {{ attendance_counts.late }} · សុំច្បាប់ {{ attendance_counts.excused }} · អវត្តមាន {{ attendance_counts.absent }}
+        · ប្រវត្តិមិនលុប
+      </p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="w-16">ល.រ</th>
+            <th>ថ្ងៃ</th>
+            <th>ថ្នាក់</th>
+            <th>ស្ថានភាព</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in attendance_records %}
+            <tr>
+              <td class="text-slate-400">{{ forloop.counter }}</td>
+              <td>
+                <a href="{{ record.course_class.get_attendance_url }}?date={{ record.attended_on|date:'Y-m-d' }}" class="font-semibold hover:text-brand-700">{{ record.attended_on|date:"d/m/Y" }}</a>
+              </td>
+              <td>{{ record.course_class.name }}</td>
+              <td>
+                {% if record.status == "present" %}
+                  <span class="badge badge-issued">{{ record.get_status_display }}</span>
+                {% elif record.status == "absent" %}
+                  <span class="badge badge-voided">{{ record.get_status_display }}</span>
+                {% elif record.status == "late" %}
+                  <span class="badge badge-suspended">{{ record.get_status_display }}</span>
+                {% else %}
+                  <span class="badge badge-suspended">{{ record.get_status_display }}</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="4" class="py-10 text-center text-slate-500">មិនទាន់មានកំណត់ត្រាវត្តមាន។</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if can.view_scores %}
+  <section class="panel mt-6 overflow-hidden">
+    <div class="border-b border-slate-100 px-5 py-4">
+      <h3 class="font-bold text-slate-900">ប្រវត្តិពិន្ទុ</h3>
+      <p class="text-xs text-slate-500">
+        {% if score_records %}{{ score_records|length }} ប្រឡង{% else %}មិនទាន់មានពិន្ទុ{% endif %}
+        · ប្រវត្តិមិនលុប
+      </p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="w-16">ល.រ</th>
+            <th>ថ្ងៃ</th>
+            <th>ថ្នាក់</th>
+            <th>វគ្គ</th>
+            <th>ប្រឡង</th>
+            <th>ពិន្ទុ</th>
+            <th>និទ្ទេស</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in score_records %}
+            <tr>
+              <td class="text-slate-400">{{ forloop.counter }}</td>
+              <td>
+                <a href="{{ row.assessment.get_absolute_url }}" class="font-semibold hover:text-brand-700">{{ row.assessment.assessed_on|date:"d/m/Y" }}</a>
+              </td>
+              <td>{{ row.course_class.name }}</td>
+              <td>{{ row.course_class.course.name }}</td>
+              <td>{{ row.assessment.name }}</td>
+              <td>{{ row.score }} / {{ row.max_score }}</td>
+              <td>
+                {% if row.grade %}
+                  <span class="font-semibold">{{ row.grade.code }}</span>
+                  <span class="text-xs text-slate-500">{{ row.grade.label }}</span>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="py-10 text-center text-slate-500">មិនទាន់មានកំណត់ត្រាពិន្ទុ។</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if can.view_payment %}
   <section class="panel mt-6 overflow-hidden">
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
       <div>
         <h3 class="font-bold text-slate-900">ប្រវត្តិបង់ប្រាក់</h3>
-        <p class="text-xs text-slate-500">ការលុបចោលរក្សាបង្កាន់ដៃដើម។ មិនអនុញ្ញាតបង់ផ្នែកខ្លះ។</p>
+        <p class="text-xs text-slate-500">ការលុបចោលរក្សាបង្កាន់ដៃដើម។ បង់ផ្នែកខ្លះបាន។ សងប្រាក់នៅតែពេញលើបង្កាន់ដៃមួយ។</p>
       </div>
-      {% if can_pay %}
+      {% if can_pay and can.collect_payment %}
         <a href="{% url 'billing:payment_create' %}" class="btn-primary">+ ទទួលបង់ប្រាក់</a>
       {% endif %}
     </div>
@@ -163,6 +287,8 @@
                   <span class="badge badge-voided">បានលុបចោល</span>
                 {% elif payment.is_refunded %}
                   <span class="badge badge-refunded">បានសងប្រាក់</span>
+                {% elif payment.is_partial %}
+                  <span class="badge badge-suspended">ផ្នែកខ្លះ · {{ payment.remaining_display }}</span>
                 {% else %}
                   <span class="badge badge-issued">បានបង់</span>
                 {% endif %}
@@ -177,4 +303,5 @@
       </table>
     </div>
   </section>
+  {% endif %}
 {% endblock %}

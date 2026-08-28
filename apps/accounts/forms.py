@@ -4,6 +4,8 @@ from django.contrib.auth.forms import AuthenticationForm, UsernameField
 from django.core.exceptions import ValidationError
 
 from .models import User
+from .roles import ADMIN_GROUP_NAME, ROLE_CHOICES, assign_role, user_role
+from .services import can_change_role
 
 INPUT_ATTRS = {"class": "form-input"}
 
@@ -64,11 +66,20 @@ class AdminUserForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["role"] = forms.ChoiceField(
+            label="តួនាទី",
+            choices=ROLE_CHOICES,
+            required=False,
+            widget=forms.Select(attrs=INPUT_ATTRS),
+        )
         self.fields["full_name_kh"].required = True
-        if not self.instance.pk:
+        if self.instance.pk:
+            self.fields["role"].initial = user_role(self.instance)
+        else:
             self.fields["password1"].required = True
             self.fields["password2"].required = True
             self.fields["is_active"].initial = True
+            self.fields["role"].initial = ADMIN_GROUP_NAME
 
     def clean(self):
         cleaned = super().clean()
@@ -82,6 +93,12 @@ class AdminUserForm(forms.ModelForm):
                     password_validation.validate_password(password1, self.instance)
                 except ValidationError as exc:
                     self.add_error("password1", exc)
+        role = cleaned.get("role") or (
+            user_role(self.instance) if self.instance.pk else ADMIN_GROUP_NAME
+        )
+        cleaned["role"] = role
+        if self.instance.pk and not can_change_role(self.instance, role):
+            self.add_error("role", "មិនអាចដកតួនាទី Admin ចុងក្រោយបានទេ។")
         return cleaned
 
     def save(self, commit=True):
@@ -93,4 +110,5 @@ class AdminUserForm(forms.ModelForm):
             raise ValidationError("សូមបំពេញពាក្យសម្ងាត់។")
         if commit:
             user.save()
+            assign_role(user, self.cleaned_data["role"])
         return user

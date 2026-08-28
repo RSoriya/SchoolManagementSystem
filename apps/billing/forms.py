@@ -3,9 +3,10 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from apps.academics.models import Course, Enrollment
+from apps.core.constants import format_money
 from apps.core.models import PaymentMethod
 
-from .services import PAYABLE_STATUSES, compute_payment_total, payable_enrollments
+from .services import PAYABLE_STATUSES, compute_payment_total, monthly_schedule, payable_enrollments, period_balance
 
 INPUT_ATTRS = {"class": "form-input"}
 
@@ -111,7 +112,7 @@ class PaymentForm(forms.Form):
         required=False,
         input_formats=["%Y-%m-%d"],
         widget=forms.DateInput(attrs={**INPUT_ATTRS, "type": "date"}, format="%Y-%m-%d"),
-        help_text="បន្ទាប់ពីបង់ថ្លៃប្រចាំខែ សូមកំណត់ Due Date ថ្មីដោយដៃ។ មិនមានវិក្កយបត្រស្វ័យប្រវត្តិទេ។",
+        help_text="វគ្គប្រចាំខែ៖ បង់ពេញរួច ប្រព័ន្ធដាក់ Due Date បន្ទាប់ស្វ័យ (+១ ខែ)។ បង់ផ្នែកខ្លះ នៅ Due Date ដដែល។",
     )
     note = forms.CharField(
         label="កំណត់ចំណាំ",
@@ -144,7 +145,23 @@ class PaymentForm(forms.Form):
                 enrollment = enrollments.filter(pk=enrollment_id).first()
             if enrollment:
                 course = enrollment.course_class.course
-                self.initial.setdefault("tuition_amount", course.default_fee)
+                balance = period_balance(
+                    enrollment,
+                    paid_on=self.initial.get("paid_on") or timezone.localdate(),
+                )
+                self.initial.setdefault("tuition_amount", balance["remaining"])
+                if course.fee_type == Course.FeeType.MONTHLY:
+                    suggestion = monthly_schedule(
+                        enrollment,
+                        self.initial.get("paid_on") or timezone.localdate(),
+                    )
+                    if balance["remaining"] < balance["fee"] and enrollment.next_due_date:
+                        self.initial.setdefault("next_due_date", enrollment.next_due_date)
+                    else:
+                        self.initial.setdefault("next_due_date", suggestion["next_due_date"])
+                    self.initial.setdefault("period_start", suggestion["period_start"])
+                    self.initial.setdefault("period_end", suggestion["period_end"])
+                    self.initial.setdefault("period_label", suggestion["period_label"])
 
     def clean(self):
         cleaned = super().clean()
@@ -170,9 +187,29 @@ class PaymentForm(forms.Form):
         except ValidationError as exc:
             self.add_error(None, exc)
 
+        if enrollment:
+            balance = period_balance(
+                enrollment,
+                paid_on=cleaned.get("paid_on"),
+                period_start=cleaned.get("period_start"),
+            )
+            tuition = cleaned.get("tuition_amount")
+            if tuition is not None and tuition > balance["remaining"]:
+                self.add_error(
+                    "tuition_amount",
+                    f"ថ្លៃសិក្សាលើសចំនួននៅជំពាក់ ({format_money(balance['remaining'], enrollment.course_class.course.currency)})។",
+                )
+
         if enrollment and enrollment.course_class.course.fee_type == Course.FeeType.MONTHLY:
+            suggestion = monthly_schedule(enrollment, cleaned.get("paid_on"))
             if not cleaned.get("next_due_date"):
-                self.add_error("next_due_date", "សូមកំណត់ Due Date បន្ទាប់ បន្ទាប់ពីបង់ថ្លៃប្រចាំខែ។")
+                cleaned["next_due_date"] = suggestion["next_due_date"]
+            if not cleaned.get("period_start"):
+                cleaned["period_start"] = suggestion["period_start"]
+            if not cleaned.get("period_end"):
+                cleaned["period_end"] = suggestion["period_end"]
+            if not (cleaned.get("period_label") or "").strip():
+                cleaned["period_label"] = suggestion["period_label"]
 
         period_start = cleaned.get("period_start")
         period_end = cleaned.get("period_end")
