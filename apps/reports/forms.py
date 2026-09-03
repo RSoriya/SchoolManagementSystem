@@ -11,7 +11,7 @@ REPORT_KINDS = {
     "revenue": "ចំណូល",
     "paid": "សិស្សបានបង់",
     "unpaid": "សិស្សមិនទាន់បង់",
-    "overdue": "សិស្សហួស Due Date",
+    "overdue": "សិស្សហួសថ្ងៃផុតកំណត់",
     "refunds": "ការសងប្រាក់",
     "attendance": "វត្តមាន",
 }

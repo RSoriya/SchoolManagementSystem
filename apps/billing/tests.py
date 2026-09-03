@@ -233,7 +233,7 @@ class BillingTests(TestCase):
         self.assertRedirects(response, f"{reverse('billing:payment_list')}?open=add")
         listing = self.client.get(reverse("billing:payment_list"))
         self.assertContains(listing, '"next_due": "2026-09-01"')
-        self.assertContains(listing, "បង់ផ្នែកខ្លះ នៅ Due Date ដដែល")
+        self.assertContains(listing, "បង់ផ្នែកខ្លះ នៅថ្ងៃផុតកំណត់ដដែល")
 
     def test_payment_form_prefills_next_due_from_enrollment(self):
         response = self.client.get(

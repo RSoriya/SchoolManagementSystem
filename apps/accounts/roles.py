@@ -29,8 +29,15 @@ SCHOOL_APP_LABELS = (
 
 CASHIER_PERMISSIONS = (
     "students.view_student",
+    "students.add_student",
+    "students.change_student",
+    "students.enroll_student",
     "academics.view_course",
+    "academics.add_course",
+    "academics.change_course",
     "academics.view_courseclass",
+    "academics.add_courseclass",
+    "academics.change_courseclass",
     "academics.view_enrollment",
     "billing.view_payment",
     "billing.view_receipt",

@@ -139,7 +139,7 @@ class Enrollment(models.Model):
     status = models.CharField("ស្ថានភាព", max_length=20, choices=Status.choices, default=Status.ACTIVE)
     enrolled_on = models.DateField("ថ្ងៃចុះឈ្មោះ")
     ended_on = models.DateField("ថ្ងៃបញ្ចប់", null=True, blank=True)
-    next_due_date = models.DateField("Due Date បន្ទាប់", null=True, blank=True)
+    next_due_date = models.DateField("ថ្ងៃផុតកំណត់បន្ទាប់", null=True, blank=True)
     note = models.CharField("កំណត់ចំណាំ", max_length=255, blank=True)
     transferred_from = models.ForeignKey(
         "self",

@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const label = document.querySelector(`label[for="${select.id}"]`);
       if (label) label.setAttribute("for", input.id);
     }
-    input.placeholder = select.dataset.comboboxPlaceholder || "វាយស្វែងរក";
+    input.placeholder = select.dataset.comboboxPlaceholder || (document.documentElement.lang === "en" ? "Type to search" : "វាយស្វែងរក");
 
     const list = document.createElement("ul");
     list.className = "combobox-list";
@@ -79,7 +79,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!visible.length) {
         const empty = document.createElement("li");
         empty.className = "combobox-empty";
-        empty.textContent = "មិនឃើញសិស្សត្រូវនឹងការស្វែងរក។";
+        empty.textContent =
+          document.documentElement.lang === "en" ? "No matching students." : "មិនឃើញសិស្សត្រូវនឹងការស្វែងរក។";
         list.append(empty);
         activeIndex = -1;
         return;

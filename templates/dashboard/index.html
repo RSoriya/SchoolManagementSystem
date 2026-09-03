@@ -82,7 +82,7 @@
           <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
         </span>
       </div>
-      <p class="mt-4 text-xs text-slate-400">ហួស Due Date {{ stats.overdue_students }} នាក់ · Unpaid / overdue</p>
+      <p class="mt-4 text-xs text-slate-400">ហួសថ្ងៃផុតកំណត់ {{ stats.overdue_students }} នាក់</p>
     </article>
     {% endif %}
   </div>
@@ -108,7 +108,7 @@
   <section id="due-alerts" class="panel mt-6 overflow-hidden scroll-mt-24">
     <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-5">
       <div>
-        <h2 class="font-bold text-slate-900">ការជូនដំណឹង Due Date</h2>
+        <h2 class="font-bold text-slate-900">ការជូនដំណឹងថ្ងៃផុតកំណត់</h2>
         <p class="text-xs text-slate-400">ហួស {{ stats.overdue_students }} នាក់ · ជិតដល់ {{ stats.due_soon_students }} នាក់</p>
       </div>
       {% if can.manage_settings %}
@@ -121,9 +121,9 @@
           <thead>
             <tr>
               <th class="w-16">ល.រ</th>
-              <th>ហួស Due Date</th>
+              <th>ហួសថ្ងៃផុតកំណត់</th>
               <th>ថ្នាក់</th>
-              <th>Due Date</th>
+              <th>ថ្ងៃផុតកំណត់</th>
               <th></th>
             </tr>
           </thead>
@@ -145,7 +145,7 @@
               </tr>
             {% empty %}
               <tr>
-                <td colspan="5" class="py-10 text-center text-slate-400">មិនមានសិស្សហួស Due Date។</td>
+                <td colspan="5" class="py-10 text-center text-slate-400">មិនមានសិស្សហួសថ្ងៃផុតកំណត់។</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -156,9 +156,9 @@
           <thead>
             <tr>
               <th class="w-16">ល.រ</th>
-              <th>ជិតដល់ Due Date</th>
+              <th>ជិតដល់ថ្ងៃផុតកំណត់</th>
               <th>ថ្នាក់</th>
-              <th>Due Date</th>
+              <th>ថ្ងៃផុតកំណត់</th>
               <th></th>
             </tr>
           </thead>
@@ -180,7 +180,7 @@
               </tr>
             {% empty %}
               <tr>
-                <td colspan="5" class="py-10 text-center text-slate-400">មិនមានសិស្សជិតដល់ Due Date។</td>
+                <td colspan="5" class="py-10 text-center text-slate-400">មិនមានសិស្សជិតដល់ថ្ងៃផុតកំណត់។</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -310,7 +310,7 @@
       <div class="flex items-center justify-between px-6 py-5">
         <div>
           <h2 class="font-bold text-slate-900">សិស្សមិនទាន់បង់</h2>
-          <p class="text-xs text-slate-400">{{ stats.unpaid_students }} នាក់ · ហួស Due Date {{ stats.overdue_students }} នាក់</p>
+          <p class="text-xs text-slate-400">{{ stats.unpaid_students }} នាក់ · ហួសថ្ងៃផុតកំណត់ {{ stats.overdue_students }} នាក់</p>
         </div>
         <a href="{% url 'reports:detail' 'unpaid' %}" class="text-sm font-semibold text-brand-700">របាយការណ៍ →</a>
       </div>
@@ -321,7 +321,7 @@
               <th class="w-16">ល.រ</th>
               <th>សិស្ស</th>
               <th>ថ្នាក់</th>
-              <th>Due Date</th>
+              <th>ថ្ងៃផុតកំណត់</th>
               <th>នៅជំពាក់</th>
               <th></th>
             </tr>

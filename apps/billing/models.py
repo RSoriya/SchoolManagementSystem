@@ -52,8 +52,8 @@ class Payment(models.Model):
     period_label = models.CharField("រយៈពេល", max_length=80, blank=True)
     period_start = models.DateField("ចាប់ផ្ដើមរយៈពេល", null=True, blank=True)
     period_end = models.DateField("បញ្ចប់រយៈពេល", null=True, blank=True)
-    previous_due_date = models.DateField("Due Date មុនបង់", null=True, blank=True)
-    next_due_date = models.DateField("Due Date បន្ទាប់", null=True, blank=True)
+    previous_due_date = models.DateField("ថ្ងៃផុតកំណត់មុនបង់", null=True, blank=True)
+    next_due_date = models.DateField("ថ្ងៃផុតកំណត់បន្ទាប់", null=True, blank=True)
     note = models.CharField("កំណត់ចំណាំ", max_length=255, blank=True)
     status = models.CharField("ស្ថានភាព", max_length=20, choices=Status.choices, default=Status.COMPLETED)
     created_by = models.ForeignKey(

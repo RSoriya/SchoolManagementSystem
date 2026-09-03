@@ -108,7 +108,7 @@ def apply_detected_chat_id(*, user=None):
 def _format_alert(enrollment, kind, school, days):
     due = enrollment.next_due_date.strftime("%d/%m/%Y") if enrollment.next_due_date else "—"
     student = enrollment.student
-    status = "ហួស Due Date" if kind == NotificationLog.Kind.OVERDUE else f"ជិតដល់ Due Date ({days} ថ្ងៃ)"
+    status = "ហួសថ្ងៃផុតកំណត់" if kind == NotificationLog.Kind.OVERDUE else f"ជិតដល់ថ្ងៃផុតកំណត់ ({days} ថ្ងៃ)"
     fee = format_money(enrollment.course_class.course.default_fee, enrollment.course_class.course.currency)
     remaining = period_balance(enrollment)
     remaining_display = format_money(remaining["remaining"], remaining["currency"])
@@ -119,7 +119,7 @@ def _format_alert(enrollment, kind, school, days):
         f"ថ្នាក់៖ {enrollment.course_class.name}\n"
         f"ថ្លៃវគ្គ៖ {fee}\n"
         f"នៅជំពាក់៖ {remaining_display}\n"
-        f"Due Date៖ {due}"
+        f"ថ្ងៃផុតកំណត់៖ {due}"
     )
 
 
@@ -186,7 +186,7 @@ def send_due_alerts(*, user=None, today=None):
     if sent or failed:
         log_event(
             action=AuditEvent.Action.TELEGRAM_SENT if sent else AuditEvent.Action.TELEGRAM_FAILED,
-            summary=f"ការជូនដំណឹង Due Date៖ ផ្ញើ {sent} · បរាជ័យ {failed} · រំលង {skipped}",
+            summary=f"ការជូនដំណឹងថ្ងៃផុតកំណត់៖ ផ្ញើ {sent} · បរាជ័យ {failed} · រំលង {skipped}",
             user=user,
         )
     return {"sent": sent, "failed": failed, "skipped": skipped}

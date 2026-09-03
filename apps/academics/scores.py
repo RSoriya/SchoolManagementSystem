@@ -5,6 +5,7 @@ from django.db import transaction
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import log_event
+from apps.core.language import tr
 
 from .attendance import roster_enrollments
 from .models import ScoreRecord
@@ -189,16 +190,16 @@ def class_result_table(course_class):
 
 def class_result_export_table(course_class):
     table = class_result_table(course_class)
-    headers = ["ល.រ", "ID", "ឈ្មោះ", "ភេទ"]
+    headers = [tr("ល.រ"), "ID", tr("ឈ្មោះ"), tr("ភេទ")]
     headers.extend(assessment.name for assessment in table["assessments"])
-    headers.extend(["សរុប", "មធ្យម", "និទ្ទេស"])
+    headers.extend([tr("សរុប"), tr("មធ្យម"), tr("និទ្ទេស")])
     rows = []
     for index, row in enumerate(table["rows"], start=1):
         student = row["student"]
         name = student.name_kh
         if student.name_en:
             name = f"{student.name_kh} ({student.name_en})"
-        cells = [index, student.student_id, name, student.get_gender_display()]
+        cells = [index, student.student_id, name, tr(student.get_gender_display())]
         cells.extend(
             exam["score"] if exam["score"] is not None else "—"
             for exam in row["exam_scores"]

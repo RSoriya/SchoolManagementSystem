@@ -100,7 +100,7 @@ class EnrollIntoClassForm(forms.Form):
         ),
     )
     next_due_date = forms.DateField(
-        label="Due Date",
+        label="ថ្ងៃផុតកំណត់",
         required=False,
         input_formats=["%Y-%m-%d"],
         widget=forms.DateInput(attrs={**INPUT_ATTRS, "type": "date"}, format="%Y-%m-%d"),

@@ -4,8 +4,8 @@ from django.db import models
 
 class NotificationLog(models.Model):
     class Kind(models.TextChoices):
-        DUE_SOON = "due_soon", "ជិតដល់ Due Date"
-        OVERDUE = "overdue", "ហួស Due Date"
+        DUE_SOON = "due_soon", "ជិតដល់ថ្ងៃផុតកំណត់"
+        OVERDUE = "overdue", "ហួសថ្ងៃផុតកំណត់"
         TEST = "test", "សារសាកល្បង"
 
     class Status(models.TextChoices):

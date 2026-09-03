@@ -186,7 +186,7 @@ def telegram_send_alerts(request):
         result = send_due_alerts(user=request.user)
         messages.success(
             request,
-            f"ការជូនដំណឹង Due Date៖ ផ្ញើ {result['sent']} · បរាជ័យ {result['failed']} · រំលង {result['skipped']}",
+            f"ការជូនដំណឹងថ្ងៃផុតកំណត់៖ ផ្ញើ {result['sent']} · បរាជ័យ {result['failed']} · រំលង {result['skipped']}",
         )
     except ValidationError as exc:
         messages.error(request, _error_message(exc))

@@ -7,6 +7,7 @@ handler403 = "django.views.defaults.permission_denied"
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("i18n/", include("django.conf.urls.i18n")),
     path("accounts/", include("apps.accounts.urls")),
     path("users/", include("apps.accounts.user_urls")),
     path("students/", include("apps.students.urls")),

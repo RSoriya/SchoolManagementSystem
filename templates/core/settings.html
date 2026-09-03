@@ -47,7 +47,7 @@
 
       <section class="panel p-6">
         <div class="mb-5">
-          <h2 class="text-lg font-bold text-slate-900">ការជូនដំណឹង Due Date</h2>
+          <h2 class="text-lg font-bold text-slate-900">ការជូនដំណឹងថ្ងៃផុតកំណត់</h2>
           <p class="mt-1 text-sm text-slate-500">ផ្ញើទៅ Admin chat តែប៉ុណ្ណោះ។ មិនមាន SMS ឬអ៊ីមែល។</p>
         </div>
         <div class="space-y-4">
@@ -102,7 +102,7 @@
         <div class="mt-5 flex flex-wrap gap-3 border-t border-slate-100 pt-5">
           <button type="submit" formaction="{% url 'core:telegram_detect_chat' %}" class="btn-secondary" {% if not telegram_token_ready %}disabled{% endif %}>យក Chat ID</button>
           <button type="submit" formaction="{% url 'core:telegram_test' %}" class="btn-secondary" {% if not telegram_ready %}disabled{% endif %}>ផ្ញើសារសាកល្បង</button>
-          <button type="submit" formaction="{% url 'core:telegram_send_alerts' %}" class="btn-primary" {% if not telegram_ready %}disabled{% endif %}>ផ្ញើការជូនដំណឹង Due Date</button>
+          <button type="submit" formaction="{% url 'core:telegram_send_alerts' %}" class="btn-primary" {% if not telegram_ready %}disabled{% endif %}>ផ្ញើការជូនដំណឹងថ្ងៃផុតកំណត់</button>
         </div>
       </section>
     </div>

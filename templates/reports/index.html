@@ -35,10 +35,10 @@
     <a href="{% url 'reports:detail' 'unpaid' %}" class="kpi-card block hover:border-brand-100">
       <p class="text-sm font-semibold text-slate-500">សិស្សមិនទាន់បង់</p>
       <p class="mt-3 text-2xl font-bold text-amber-600">{{ stats.unpaid }} <span class="text-base font-semibold text-slate-400">នាក់</span></p>
-      <p class="mt-2 text-xs text-slate-400">ជិតដល់ Due Date {{ stats.due_soon }} នាក់</p>
+      <p class="mt-2 text-xs text-slate-400">ជិតដល់ថ្ងៃផុតកំណត់ {{ stats.due_soon }} នាក់</p>
     </a>
     <a href="{% url 'reports:detail' 'overdue' %}" class="kpi-card block hover:border-brand-100">
-      <p class="text-sm font-semibold text-slate-500">សិស្សហួស Due Date</p>
+      <p class="text-sm font-semibold text-slate-500">សិស្សហួសថ្ងៃផុតកំណត់</p>
       <p class="mt-3 text-2xl font-bold text-red-600">{{ stats.overdue }} <span class="text-base font-semibold text-slate-400">នាក់</span></p>
       <p class="mt-2 text-xs text-slate-400">សងប្រាក់ខែនេះ {{ stats.refunds_month }} កំណត់ត្រា</p>
     </a>

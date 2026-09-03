@@ -8,7 +8,7 @@ class SchoolSettings(models.Model):
     phone = models.CharField("លេខទូរសព្ទ", max_length=50, blank=True)
     logo = models.ImageField("និមិត្តសញ្ញា", upload_to="school/", blank=True)
     reminder_days_before_due = models.PositiveSmallIntegerField(
-        "ជូនដំណឹងមុន Due Date (ថ្ងៃ)",
+        "ជូនដំណឹងមុនថ្ងៃផុតកំណត់ (ថ្ងៃ)",
         default=3,
     )
     overdue_alert_daily = models.BooleanField("ជូនដំណឹង overdue រាល់ថ្ងៃ", default=True)

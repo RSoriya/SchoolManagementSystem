@@ -34,7 +34,7 @@ def school_context(request):
     return {
         "school_name": school_name,
         "school": school,
-        "app_version": "0.14.0",
+        "app_version": "0.14.2",
         "alert_count": alert_count,
         "can": can,
         "role_label": role_label,

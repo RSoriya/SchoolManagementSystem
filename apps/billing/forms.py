@@ -118,11 +118,11 @@ class PaymentForm(forms.Form):
         widget=forms.DateInput(attrs={**INPUT_ATTRS, "type": "date"}, format="%Y-%m-%d"),
     )
     next_due_date = forms.DateField(
-        label="Due Date បន្ទាប់",
+        label="ថ្ងៃផុតកំណត់បន្ទាប់",
         required=False,
         input_formats=["%Y-%m-%d"],
         widget=forms.DateInput(attrs={**INPUT_ATTRS, "type": "date"}, format="%Y-%m-%d"),
-        help_text="វគ្គប្រចាំខែ៖ បង់ពេញរួច ប្រព័ន្ធដាក់ Due Date បន្ទាប់ស្វ័យ (+១ ខែ)។ បង់ផ្នែកខ្លះ នៅ Due Date ដដែល។",
+        help_text="វគ្គប្រចាំខែ៖ បង់ពេញរួច ប្រព័ន្ធដាក់ថ្ងៃផុតកំណត់បន្ទាប់ស្វ័យ (+១ ខែ)។ បង់ផ្នែកខ្លះ នៅថ្ងៃផុតកំណត់ដដែល។",
     )
     note = forms.CharField(
         label="កំណត់ចំណាំ",

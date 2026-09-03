@@ -283,6 +283,53 @@ class StaffRoleTests(TestCase):
         response = self.client.post(reverse("billing:payment_void", args=[1]))
         self.assertEqual(response.status_code, 403)
 
+    def test_cashier_can_add_and_edit_students_courses_classes(self):
+        from apps.students.models import Student
+
+        self.client.force_login(self.cashier)
+        students = self.client.get(reverse("students:list"))
+        self.assertContains(students, "+ បន្ថែមសិស្ស")
+        courses = self.client.get(reverse("academics:course_list"))
+        self.assertContains(courses, "+ បន្ថែមវគ្គ")
+        classes = self.client.get(reverse("academics:class_list"))
+        self.assertContains(classes, "+ បន្ថែមថ្នាក់")
+        self.assertEqual(self.client.post(reverse("students:create"), {"from_modal": "1"}).status_code, 200)
+        created = self.client.post(
+            reverse("students:create"),
+            {
+                "name_kh": "រិទ្ធ",
+                "name_en": "Rith",
+                "gender": "male",
+                "phone": "012000111",
+                "is_active": "on",
+            },
+        )
+        self.assertRedirects(created, reverse("students:list"))
+        student = Student.objects.get(name_en="Rith")
+        listing = self.client.get(reverse("students:list"))
+        self.assertContains(listing, "កែ")
+        self.assertNotContains(listing, 'data-delete-id=')
+        self.assertEqual(self.client.get(reverse("academics:course_create"), follow=True).status_code, 200)
+        self.assertEqual(self.client.get(reverse("academics:class_create"), follow=True).status_code, 200)
+        edited = self.client.post(
+            reverse("academics:course_edit", args=[self.course.pk]),
+            {
+                "name": "English Kids Plus",
+                "fee_type": self.course.fee_type,
+                "default_fee": "35.00",
+                "currency": self.course.currency,
+                "is_active": "on",
+            },
+        )
+        self.assertRedirects(edited, reverse("academics:course_list"))
+        self.course.refresh_from_db()
+        self.assertEqual(self.course.name, "English Kids Plus")
+        self.assertEqual(self.client.post(reverse("students:delete", args=[student.student_id])).status_code, 403)
+        self.assertEqual(self.client.post(reverse("academics:course_delete", args=[self.course.pk])).status_code, 403)
+        self.assertEqual(self.client.post(reverse("academics:class_delete", args=[self.own_class.pk])).status_code, 403)
+        hub = self.client.get(self.own_class.get_absolute_url())
+        self.assertContains(hub, "+ ចុះឈ្មោះសិស្ស")
+
     def test_teacher_sees_only_own_classes(self):
         self.client.force_login(self.teacher)
         listing = self.client.get(reverse("academics:class_list"))

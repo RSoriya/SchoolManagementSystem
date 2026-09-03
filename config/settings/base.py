@@ -62,6 +62,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "apps.core.middleware.TranslateHtmlMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -74,6 +75,7 @@ TEMPLATES = [
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.request",
+                "django.template.context_processors.i18n",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.context_processors.school_context",
@@ -114,6 +116,13 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = "km"
+LANGUAGES = [
+    ("km", "ខ្មែរ"),
+    ("en", "English"),
+]
+LANGUAGE_COOKIE_NAME = "django_language"
+LANGUAGE_COOKIE_AGE = 60 * 60 * 24 * 365
+LANGUAGE_COOKIE_SAMESITE = "Lax"
 TIME_ZONE = env("SCHOOL_TIME_ZONE", "Asia/Phnom_Penh")
 USE_I18N = True
 USE_TZ = True

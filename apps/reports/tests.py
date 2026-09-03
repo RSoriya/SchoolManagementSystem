@@ -68,7 +68,7 @@ class ReportTests(TestCase):
         response = self.client.get(reverse("reports:index"))
         self.assertContains(response, "របាយការណ៍")
         self.assertContains(response, "ចំណូលថ្ងៃនេះ")
-        self.assertContains(response, "សិស្សហួស Due Date")
+        self.assertContains(response, "សិស្សហួសថ្ងៃផុតកំណត់")
         nav = self.client.get(reverse("dashboard:index"))
         self.assertContains(nav, reverse("reports:index"))
         self.assertContains(nav, "របាយការណ៍")

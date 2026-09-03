@@ -12,6 +12,7 @@ from apps.accounts.scoping import visible_classes
 from apps.academics.attendance import attendance_report_rows
 from apps.academics.models import CourseClass
 from apps.core.constants import format_money
+from apps.core.language import tr
 from apps.core.pagination import extra_query, paginate, per_page_value
 
 _paginate = paginate
@@ -127,7 +128,7 @@ def _build_report(kind, filters, today, user=None):
         ]
     elif kind == "unpaid":
         rows = list(unpaid_rows(filters, today))
-        headers = ["ល.រ", "សិស្ស", "លេខសម្គាល់", "ថ្នាក់", "Due Date", "នៅជំពាក់"]
+        headers = ["ល.រ", "សិស្ស", "លេខសម្គាល់", "ថ្នាក់", "ថ្ងៃផុតកំណត់", "នៅជំពាក់"]
         table = [
             [
                 index,
@@ -142,7 +143,7 @@ def _build_report(kind, filters, today, user=None):
         kpis = [("សិស្សមិនទាន់បង់", str(len({row.student_id for row in rows})))]
     elif kind == "overdue":
         rows = list(overdue_rows(filters, today))
-        headers = ["ល.រ", "សិស្ស", "លេខសម្គាល់", "ថ្នាក់", "Due Date", "នៅជំពាក់"]
+        headers = ["ល.រ", "សិស្ស", "លេខសម្គាល់", "ថ្នាក់", "ថ្ងៃផុតកំណត់", "នៅជំពាក់"]
         table = [
             [
                 index,
@@ -154,7 +155,7 @@ def _build_report(kind, filters, today, user=None):
             ]
             for index, enrollment in enumerate(rows, start=1)
         ]
-        kpis = [("សិស្សហួស Due Date", str(len({row.student_id for row in rows})))]
+        kpis = [("សិស្សហួសថ្ងៃផុតកំណត់", str(len({row.student_id for row in rows})))]
     elif kind == "refunds":
         rows = list(filtered_refunds(filters))
         headers = ["ល.រ", "ថ្ងៃសង", "សិស្ស", "លេខសម្គាល់", "ថ្នាក់", "វិធីសង", "មូលហេតុ", "ចំនួន"]
@@ -213,11 +214,11 @@ def _build_report(kind, filters, today, user=None):
         raise Http404()
     return {
         "kind": kind,
-        "title": REPORT_KINDS[kind],
-        "headers": headers,
+        "title": tr(REPORT_KINDS[kind]),
+        "headers": [tr(header) for header in headers],
         "table": table,
         "rows": rows,
-        "kpis": kpis,
+        "kpis": [(tr(label), value) for label, value in kpis],
         "summary": summary,
     }
 
@@ -257,7 +258,7 @@ def _report_context(request, kind):
     filters = _filters_from_form(form, kind, today)
     report = _build_report(kind, filters, today, user=request.user)
     school = get_school_settings()
-    period = _period_label(filters, kind, today)
+    period = tr(_period_label(filters, kind, today))
     query = _export_query(request)
     return {
         "page_title": report["title"],

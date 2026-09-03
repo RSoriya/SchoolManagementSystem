@@ -278,3 +278,46 @@ class PaginationTests(SimpleTestCase):
     def test_extra_query_keeps_filters(self):
         request = self.factory.get("/", {"q": "sok", "class": "3", "page": "2", "per_page": "10"})
         self.assertEqual(extra_query(request), "&q=sok&class=3&per_page=10")
+
+
+class LanguageSwitchTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="admin",
+            password="secure-test-password",
+        )
+        self.client.force_login(self.user)
+
+    def test_switcher_is_on_dashboard(self):
+        page = self.client.get(reverse("dashboard:index"))
+        self.assertContains(page, 'name="language"')
+        self.assertContains(page, "ផ្ទាំងគ្រប់គ្រង")
+
+    def test_english_translates_navigation(self):
+        self.client.post(reverse("set_language"), {"language": "en", "next": "/"})
+        page = self.client.get(reverse("dashboard:index"))
+        self.assertContains(page, "Dashboard")
+        self.assertContains(page, "Students")
+        self.assertContains(page, "Payments")
+        self.assertNotContains(page, ">ផ្ទាំងគ្រប់គ្រង<")
+
+    def test_login_page_can_use_english(self):
+        self.client.logout()
+        self.client.post(reverse("set_language"), {"language": "en", "next": reverse("accounts:login")})
+        page = self.client.get(reverse("accounts:login"))
+        self.assertContains(page, "Sign in")
+        self.assertContains(page, "Remember me")
+
+    def test_english_keeps_names_that_contain_student_word(self):
+        self.client.post(reverse("set_language"), {"language": "en", "next": "/"})
+        from django.utils import translation
+
+        from apps.core.language import translate_html
+
+        with translation.override("en"):
+            html = translate_html("<a>សិស្ស A</a><span>សិស្ស</span><p>ហួស 6 នាក់ · ជិតដល់ 0 នាក់</p>")
+        self.assertIn("សិស្ស A", html)
+        self.assertIn(">Students<", html)
+        self.assertIn("Overdue 6 students", html)
+        self.assertIn("due soon 0 students", html)
+        self.assertNotIn("ជិតto", html)
