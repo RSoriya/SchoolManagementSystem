@@ -85,6 +85,25 @@ class StudentAndEnrollmentTests(TestCase):
         self.assertEqual(student.student_id, f"STU-{year}-0001")
         self.assertRedirects(response, reverse("students:list"))
 
+    def test_student_detail_has_no_new_class_form(self):
+        self.client.force_login(self.user)
+        student = Student.objects.create(
+            name_kh="សុខា",
+            name_en="Sokha",
+            gender=Student.Gender.MALE,
+            phone="012345678",
+        )
+        page = self.client.get(student.get_absolute_url())
+        self.assertContains(page, "ព័ត៌មានទំនាក់ទំនង")
+        self.assertContains(page, "ប្រវត្តិចុះឈ្មោះ")
+        self.assertNotContains(page, "ចុះឈ្មោះថ្នាក់ថ្មី")
+        blocked = self.client.post(
+            f"{student.get_absolute_url()}enroll/",
+            {"course_class": self.class_morning.pk},
+        )
+        self.assertEqual(blocked.status_code, 404)
+        self.assertFalse(Enrollment.objects.filter(student=student).exists())
+
     def test_student_can_enroll_in_multiple_classes(self):
         student = Student.objects.create(
             name_kh="សុខា",

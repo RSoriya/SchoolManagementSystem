@@ -18,7 +18,7 @@
         <a href="{% url 'students:list' %}?open=add" class="btn-primary">+ ចុះឈ្មោះសិស្ស</a>
         {% endif %}
         {% if can.collect_payment %}
-        <a href="{% url 'billing:payment_create' %}" class="btn-secondary">ទទួលបង់ប្រាក់</a>
+        <a href="{% url 'billing:payment_list' %}?open=add" class="btn-secondary">ទទួលបង់ប្រាក់</a>
         {% endif %}
         {% if can.view_reports %}
         <a href="{% url 'reports:index' %}" class="btn-secondary">របាយការណ៍</a>
@@ -139,7 +139,7 @@
                 <td><span class="badge badge-voided">{{ enrollment.next_due_date|date:"d/m/Y" }}</span></td>
                 <td class="text-right">
                   {% if can.collect_payment %}
-                  <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
+                  <a href="{% url 'billing:payment_list' %}?open=add&enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
                   {% endif %}
                 </td>
               </tr>
@@ -174,7 +174,7 @@
                 <td><span class="badge badge-suspended">{{ enrollment.next_due_date|date:"d/m/Y" }}</span></td>
                 <td class="text-right">
                   {% if can.collect_payment %}
-                  <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
+                  <a href="{% url 'billing:payment_list' %}?open=add&enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
                   {% endif %}
                 </td>
               </tr>
@@ -347,7 +347,7 @@
                 <td>{{ enrollment.period_remaining_display|default:"—" }}</td>
                 <td class="text-right">
                   {% if can.collect_payment %}
-                  <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
+                  <a href="{% url 'billing:payment_list' %}?open=add&enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
                   {% endif %}
                 </td>
               </tr>

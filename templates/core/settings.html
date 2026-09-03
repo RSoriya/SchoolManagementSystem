@@ -71,7 +71,7 @@
         <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 class="text-lg font-bold text-slate-900">Telegram · Admin chat</h2>
-            <p class="mt-1 text-sm text-slate-500">ភ្ជាប់ Bot ដើម្បីទទួលការជូនដំណឹង។</p>
+            <p class="mt-1 text-sm text-slate-500">បើក Bot រួចចុច Start មុន បន្ទាប់មកយក Chat ID។ ផ្ញើទៅ Admin តែប៉ុណ្ណោះ។</p>
           </div>
           {% if telegram_ready %}
             <span class="badge badge-active">បានភ្ជាប់</span>
@@ -95,10 +95,12 @@
           <div>
             <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.telegram_admin_chat_id.id_for_label }}">{{ form.telegram_admin_chat_id.label }}</label>
             {{ form.telegram_admin_chat_id }}
+            <p class="mt-2 text-sm text-slate-500">កុំចម្លង Chat ID ពី Bot ផ្សេង។ ត្រូវយកពី Bot នេះបន្ទាប់ពីចុច Start។</p>
             {% for error in form.telegram_admin_chat_id.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
           </div>
         </div>
         <div class="mt-5 flex flex-wrap gap-3 border-t border-slate-100 pt-5">
+          <button type="submit" formaction="{% url 'core:telegram_detect_chat' %}" class="btn-secondary" {% if not telegram_token_ready %}disabled{% endif %}>យក Chat ID</button>
           <button type="submit" formaction="{% url 'core:telegram_test' %}" class="btn-secondary" {% if not telegram_ready %}disabled{% endif %}>ផ្ញើសារសាកល្បង</button>
           <button type="submit" formaction="{% url 'core:telegram_send_alerts' %}" class="btn-primary" {% if not telegram_ready %}disabled{% endif %}>ផ្ញើការជូនដំណឹង Due Date</button>
         </div>
@@ -106,30 +108,96 @@
     </div>
   </form>
 
-  <section class="panel mt-5 p-6">
-    <div class="mb-5">
-      <h2 class="text-lg font-bold text-slate-900">វិធីបង់ប្រាក់</h2>
-      <p class="mt-1 text-sm text-slate-500">ប្រើពេលទទួលបង់ និងសងប្រាក់។ Cash មិនត្រូវការ Transaction Reference។</p>
+  <div
+    data-resource-modals
+    class="panel mt-5 overflow-hidden"
+    data-create-url="{{ method_create_url }}"
+    data-add-title="បន្ថែមវិធីបង់ប្រាក់"
+    data-edit-title="កែវិធីបង់ប្រាក់"
+    {% if open_form_modal %}data-open-modal="form"{% endif %}
+  >
+    {{ method_payloads|json_script:"payment-method-payloads" }}
+    <div class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">វិធីបង់ប្រាក់</h2>
+        <p class="mt-1 text-sm text-slate-500">បន្ថែម កែ ឬលុបបាន។ វិធីដែលមានប្រវត្តិបង់មិនអាចលុបបានទេ។</p>
+      </div>
+      <button type="button" class="btn-primary" data-add-open>+ បន្ថែមវិធីបង់</button>
     </div>
-    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {% for method in payment_methods %}
-        <article class="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
-          <div class="flex items-start justify-between gap-2">
-            <p class="font-semibold text-slate-900">{{ method.name }}</p>
-            {% if method.is_active %}
-              <span class="badge badge-active">សកម្ម</span>
-            {% else %}
-              <span class="badge badge-dropped">បិទ</span>
-            {% endif %}
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="w-16">ល.រ</th>
+            <th>ឈ្មោះ</th>
+            <th>កូដ</th>
+            <th>Reference</th>
+            <th>ស្ថានភាព</th>
+            <th class="text-right">សកម្មភាព</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for method in payment_methods %}
+            <tr>
+              <td class="text-slate-400">{{ forloop.counter }}</td>
+              <td class="font-semibold">{{ method.name }}</td>
+              <td class="font-medium text-slate-500">{{ method.code }}</td>
+              <td>{% if method.requires_reference %}ត្រូវការ{% else %}មិនត្រូវការ{% endif %}</td>
+              <td>
+                {% if method.is_active %}
+                  <span class="badge badge-active">សកម្ម</span>
+                {% else %}
+                  <span class="badge badge-dropped">បិទ</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="flex justify-end gap-2">
+                  <button type="button" class="btn-quiet" data-edit-id="{{ method.pk }}">កែ</button>
+                  <button type="button" class="btn-danger" data-delete-id="{{ method.pk }}">លុប</button>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" class="py-12 text-center text-slate-400">មិនទាន់មានវិធីបង់ប្រាក់។</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div data-modal="form-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="method-form-title">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-lg">
+        <div class="mb-5 flex items-start justify-between gap-3">
+          <h2 id="method-form-title" class="text-xl font-bold text-slate-900" data-form-title>បន្ថែមវិធីបង់ប្រាក់</h2>
+          <button type="button" class="btn-quiet" data-modal-close aria-label="បិទ">✕</button>
+        </div>
+        <form method="post" action="{{ method_form_action }}" class="grid gap-5 sm:grid-cols-2" data-resource-form novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="from_modal" value="1">
+          {% include "core/includes/payment_method_fields.html" with form=method_form %}
+          <div class="flex gap-3 sm:col-span-2">
+            <button type="submit" class="btn-primary">រក្សាទុក</button>
+            <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
           </div>
-          <p class="mt-2 text-sm text-slate-500">{{ method.code }}</p>
-          <p class="mt-1 text-sm text-slate-400">{% if method.requires_reference %}ត្រូវការ Reference{% else %}មិនត្រូវការ Reference{% endif %}</p>
-        </article>
-      {% empty %}
-        <p class="col-span-full py-6 text-center text-slate-400">នឹងបង្កើតស្វ័យប្រវត្តិពេល migrate។</p>
-      {% endfor %}
+        </form>
+      </div>
     </div>
-  </section>
+
+    <div data-modal="delete-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-md text-center">
+        <h2 class="text-xl font-bold text-slate-900">លុបវិធីបង់ប្រាក់</h2>
+        <p class="mt-3 text-slate-600">តើអ្នកពិតជាចង់លុប <strong data-delete-name></strong> មែនទេ?</p>
+        <form method="post" class="mt-6 flex justify-center gap-3" data-delete-form>
+          {% csrf_token %}
+          <button type="submit" class="btn-danger px-4 py-2.5 text-base">លុប</button>
+          <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <div class="mt-5 grid gap-5 xl:grid-cols-2">
     <section class="panel overflow-hidden">
@@ -145,6 +213,7 @@
               <th>ប្រភេទ</th>
               <th>ស្ថានភាព</th>
               <th>សិស្ស</th>
+              <th>កំហុស</th>
             </tr>
           </thead>
           <tbody>
@@ -169,10 +238,11 @@
                     —
                   {% endif %}
                 </td>
+                <td class="max-w-xs text-sm text-slate-500">{{ log.error|default:"—" }}</td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="5" class="py-12 text-center text-slate-400">មិនទាន់មានការផ្ញើ។</td>
+                <td colspan="6" class="py-12 text-center text-slate-400">មិនទាន់មានការផ្ញើ។</td>
               </tr>
             {% endfor %}
           </tbody>

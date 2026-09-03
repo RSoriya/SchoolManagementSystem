@@ -28,36 +28,32 @@
     </div>
   </div>
 
-  <form method="get" class="panel no-print mb-5 p-4">
-    <div class="flex flex-col gap-4">
-      {% if form.date_from or form.date_to %}
-        <div class="flex flex-col gap-4">
-          {% if form.date_from %}
-            <div class="date-field w-full min-w-0">
-              <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.date_from.id_for_label }}">{{ form.date_from.label }}</label>
-              {{ form.date_from }}
-            </div>
-          {% endif %}
-          {% if form.date_to %}
-            <div class="date-field w-full min-w-0">
-              <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ form.date_to.id_for_label }}">{{ form.date_to.label }}</label>
-              {{ form.date_to }}
-            </div>
-          {% endif %}
+  <form method="get" class="panel report-filters no-print mb-5 p-4">
+    <div class="flex flex-wrap items-end gap-3">
+      {% if form.date_from %}
+        <div class="w-52 max-w-full min-w-0">
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700" for="{{ form.date_from.id_for_label }}">{{ form.date_from.label }}</label>
+          <div class="date-field">
+            {{ form.date_from }}
+          </div>
         </div>
       {% endif %}
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {% for field in form %}
-          {% if field.html_name != "date_from" and field.html_name != "date_to" %}
-            <div class="min-w-0">
-              <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ field.id_for_label }}">{{ field.label }}</label>
-              {{ field }}
-            </div>
-          {% endif %}
-        {% endfor %}
-      </div>
-    </div>
-    <div class="mt-4 flex flex-wrap items-center gap-3">
+      {% if form.date_to %}
+        <div class="w-52 max-w-full min-w-0">
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700" for="{{ form.date_to.id_for_label }}">{{ form.date_to.label }}</label>
+          <div class="date-field">
+            {{ form.date_to }}
+          </div>
+        </div>
+      {% endif %}
+      {% for field in form %}
+        {% if field.html_name != "date_from" and field.html_name != "date_to" %}
+          <div class="w-52 max-w-full min-w-0">
+            <label class="mb-1.5 block text-sm font-semibold text-slate-700" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+          </div>
+        {% endif %}
+      {% endfor %}
       {% include "includes/per_page.html" %}
       <button type="submit" class="btn-primary">ច្រោះ</button>
       <a href="{% url 'reports:detail' kind %}" class="btn-secondary">សម្អាត</a>

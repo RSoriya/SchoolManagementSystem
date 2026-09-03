@@ -10,7 +10,6 @@ urlpatterns = [
     path("<str:student_id>/", views.student_detail, name="detail"),
     path("<str:student_id>/edit/", views.student_edit, name="edit"),
     path("<str:student_id>/delete/", views.student_delete, name="delete"),
-    path("<str:student_id>/enroll/", views.enroll, name="enroll"),
     path(
         "<str:student_id>/enrollments/<int:enrollment_id>/transfer/",
         views.transfer,

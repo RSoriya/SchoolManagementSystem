@@ -6,9 +6,16 @@
   <div
     data-resource-modals
     class="page-list"
-    {% if open_receipt_modal %}data-open-modal="receipt"{% endif %}
+    {% if can.collect_payment %}
+    data-create-url="{% url 'billing:payment_create' %}"
+    data-add-title="ទទួលបង់ប្រាក់"
+    {% endif %}
+    {% if open_form_modal %}data-open-modal="form"{% elif open_receipt_modal %}data-open-modal="receipt"{% endif %}
   >
     {{ payloads|json_script:"payment-payloads" }}
+    {% if can.collect_payment %}
+      {{ enrollment_payloads|json_script:"enrollment-payloads" }}
+    {% endif %}
 
     <div class="page-toolbar">
       <form method="get" class="flex min-w-0 flex-1 flex-wrap gap-3">
@@ -23,7 +30,7 @@
         <button type="submit" class="btn-secondary">ស្វែងរក</button>
       </form>
       {% if can.collect_payment %}
-      <a href="{% url 'billing:payment_create' %}" class="btn-primary">+ ទទួលបង់ប្រាក់</a>
+      <button type="button" class="btn-primary" data-add-open>+ ទទួលបង់ប្រាក់</button>
       {% endif %}
     </div>
 
@@ -100,6 +107,27 @@
       {% include "includes/pagination.html" with page=payments extra_query=extra_query %}
     </div>
 
+    {% if can.collect_payment %}
+    <div data-modal="form-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="payment-form-title">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-xl">
+        <div class="mb-5 flex items-start justify-between gap-3">
+          <h2 id="payment-form-title" class="text-xl font-bold text-slate-900" data-form-title>ទទួលបង់ប្រាក់</h2>
+          <button type="button" class="btn-quiet" data-modal-close aria-label="បិទ">✕</button>
+        </div>
+        <form method="post" action="{% url 'billing:payment_create' %}" data-resource-form data-payment-form novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="from_modal" value="1">
+          {% include "billing/includes/payment_form_fields.html" %}
+          <div class="mt-6 flex flex-wrap gap-3">
+            <button type="submit" class="btn-primary">ទទួលបង់ប្រាក់ និងចេញបង្កាន់ដៃ</button>
+            <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
     {% include "billing/includes/receipt_modal.html" %}
 
     <div data-modal="void-modal" class="modal-overlay" role="dialog" aria-modal="true">
@@ -142,4 +170,8 @@
       </div>
     </div>
   </div>
+{% endblock %}
+
+{% block extra_js %}
+  {% include "billing/includes/payment_form_script.html" %}
 {% endblock %}

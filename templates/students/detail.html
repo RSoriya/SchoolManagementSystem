@@ -19,40 +19,16 @@
     {% endif %}
   </div>
 
-  <div class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-    <section class="panel p-6">
-      <h3 class="mb-4 font-bold text-slate-900">ព័ត៌មានទំនាក់ទំនង</h3>
-      <dl class="grid gap-4 sm:grid-cols-2 text-sm">
-        <div><dt class="text-slate-500">ទូរសព្ទ</dt><dd class="font-semibold text-slate-900">{{ student.phone }}</dd></div>
-        <div><dt class="text-slate-500">អ៊ីមែល</dt><dd class="font-semibold text-slate-900">{{ student.email|default:"—" }}</dd></div>
-        <div class="sm:col-span-2"><dt class="text-slate-500">អាសយដ្ឋាន</dt><dd class="font-semibold text-slate-900">{{ student.address|default:"—" }}</dd></div>
-        <div><dt class="text-slate-500">ថ្ងៃកំណើត</dt><dd class="font-semibold text-slate-900">{{ student.date_of_birth|date:"d/m/Y"|default:"—" }}</dd></div>
-        <div><dt class="text-slate-500">អាណាព្យាបាល</dt><dd class="font-semibold text-slate-900">{{ student.guardian_name|default:"—" }} · {{ student.guardian_phone|default:"" }}</dd></div>
-      </dl>
-    </section>
-
-    {% if can.enroll_student %}
-    <section class="panel p-6">
-      <h3 class="mb-4 font-bold text-slate-900">ចុះឈ្មោះថ្នាក់ថ្មី</h3>
-      <form method="post" action="{% url 'students:enroll' student.student_id %}" class="space-y-4">
-        {% csrf_token %}
-        <div>
-          <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ enroll_form.course_class.id_for_label }}">{{ enroll_form.course_class.label }}</label>
-          {{ enroll_form.course_class }}
-        </div>
-        <div>
-          <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ enroll_form.next_due_date.id_for_label }}">{{ enroll_form.next_due_date.label }}</label>
-          {{ enroll_form.next_due_date }}
-        </div>
-        <div>
-          <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ enroll_form.note.id_for_label }}">{{ enroll_form.note.label }}</label>
-          {{ enroll_form.note }}
-        </div>
-        <button type="submit" class="btn-primary" {% if not can_enroll %}disabled{% endif %}>ចុះឈ្មោះ</button>
-      </form>
-    </section>
-    {% endif %}
-  </div>
+  <section class="panel p-6">
+    <h3 class="mb-4 font-bold text-slate-900">ព័ត៌មានទំនាក់ទំនង</h3>
+    <dl class="grid gap-4 sm:grid-cols-2 text-sm">
+      <div><dt class="text-slate-500">ទូរសព្ទ</dt><dd class="font-semibold text-slate-900">{{ student.phone }}</dd></div>
+      <div><dt class="text-slate-500">អ៊ីមែល</dt><dd class="font-semibold text-slate-900">{{ student.email|default:"—" }}</dd></div>
+      <div class="sm:col-span-2"><dt class="text-slate-500">អាសយដ្ឋាន</dt><dd class="font-semibold text-slate-900">{{ student.address|default:"—" }}</dd></div>
+      <div><dt class="text-slate-500">ថ្ងៃកំណើត</dt><dd class="font-semibold text-slate-900">{{ student.date_of_birth|date:"d/m/Y"|default:"—" }}</dd></div>
+      <div><dt class="text-slate-500">អាណាព្យាបាល</dt><dd class="font-semibold text-slate-900">{{ student.guardian_name|default:"—" }} · {{ student.guardian_phone|default:"" }}</dd></div>
+    </dl>
+  </section>
 
   <section class="panel mt-6 overflow-hidden">
     <div class="border-b border-slate-100 px-5 py-4">
@@ -95,7 +71,7 @@
                 {% if enrollment.status == "active" %}
                   <div class="flex flex-wrap justify-end gap-1">
                     {% if can.collect_payment %}
-                    <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">ទទួលបង់</a>
+                    <a href="{% url 'billing:payment_list' %}?open=add&enrollment={{ enrollment.pk }}" class="btn-quiet">ទទួលបង់</a>
                     {% endif %}
                     {% if can.change_enrollment %}
                     <a href="{% url 'students:transfer' student.student_id enrollment.pk %}" class="btn-quiet">ផ្ទេរ</a>
@@ -116,7 +92,7 @@
                 {% elif enrollment.status == "suspended" %}
                   <div class="flex flex-wrap justify-end gap-1">
                     {% if can.collect_payment %}
-                    <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">ទទួលបង់</a>
+                    <a href="{% url 'billing:payment_list' %}?open=add&enrollment={{ enrollment.pk }}" class="btn-quiet">ទទួលបង់</a>
                     {% endif %}
                     {% if can.change_enrollment %}
                     <form method="post" action="{% url 'students:change_status' student.student_id enrollment.pk 'resume' %}">
@@ -253,7 +229,7 @@
         <p class="text-xs text-slate-500">ការលុបចោលរក្សាបង្កាន់ដៃដើម។ បង់ផ្នែកខ្លះបាន។ សងប្រាក់នៅតែពេញលើបង្កាន់ដៃមួយ។</p>
       </div>
       {% if can_pay and can.collect_payment %}
-        <a href="{% url 'billing:payment_create' %}" class="btn-primary">+ ទទួលបង់ប្រាក់</a>
+        <a href="{% url 'billing:payment_list' %}?open=add" class="btn-primary">+ ទទួលបង់ប្រាក់</a>
       {% endif %}
     </div>
     <div class="overflow-x-auto">

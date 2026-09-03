@@ -90,6 +90,12 @@ class CourseClass(models.Model):
     def get_results_url(self):
         return reverse("academics:class_results", kwargs={"pk": self.pk})
 
+    def get_results_excel_url(self):
+        return reverse("academics:class_results_excel", kwargs={"pk": self.pk})
+
+    def get_results_pdf_url(self):
+        return reverse("academics:class_results_pdf", kwargs={"pk": self.pk})
+
     @property
     def instructor_display(self):
         if self.instructor_id:

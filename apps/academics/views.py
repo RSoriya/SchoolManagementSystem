@@ -13,6 +13,8 @@ from apps.accounts.roles import user_has_perm
 from apps.accounts.scoping import get_visible_class, visible_classes, visible_courses
 from apps.billing.services import attach_period_balances
 from apps.core.pagination import extra_query, paginate, per_page_value
+from apps.core.services import get_school_settings
+from apps.reports.exporters import excel_response, pdf_response
 from apps.students.models import Student
 
 from .attendance import (
@@ -28,7 +30,7 @@ from .models import Assessment, AttendanceRecord, Course, CourseClass, Enrollmen
 from .payloads import class_payload, course_payload
 from .scores import GRADE_LEGEND
 from .scores import error_message as score_error_message
-from .scores import class_result_table, save_class_scores, score_register
+from .scores import class_result_export_table, class_result_table, save_class_scores, score_register
 from .services import enroll_student
 
 
@@ -392,6 +394,23 @@ def class_scores(request, pk):
     )
 
 
+def _class_results_export_context(request, pk):
+    course_class = get_visible_class(request.user, pk)
+    table = class_result_export_table(course_class)
+    school = get_school_settings()
+    return {
+        "course_class": course_class,
+        "school": school,
+        "page_title": f"លទ្ធផល · {course_class.name}",
+        "subtitle": f"{school.school_name} · {course_class.course.name}",
+        "headers": table["headers"],
+        "table": table["rows"],
+        "assessments": table["assessments"],
+        "grade_legend": GRADE_LEGEND,
+        "print_url": course_class.get_results_url() + "?print=1",
+    }
+
+
 @permission_required("academics.view_scorerecord")
 @require_GET
 def class_results(request, pk):
@@ -407,10 +426,45 @@ def class_results(request, pk):
             "assessments": table["assessments"],
             "result_rows": result_page,
             "grade_legend": GRADE_LEGEND,
+            "school": get_school_settings(),
             "per_page": per_page_value(request),
             "extra_query": extra_query(request),
+            "open_print": request.GET.get("print") == "1",
         },
     )
+
+
+@permission_required("academics.view_scorerecord")
+@require_GET
+def class_results_excel(request, pk):
+    context = _class_results_export_context(request, pk)
+    course_class = context["course_class"]
+    filename = f"results-{course_class.pk}-{timezone.localdate().isoformat()}.xlsx"
+    return excel_response(
+        filename,
+        [
+            {
+                "title": "លទ្ធផល",
+                "heading": context["page_title"],
+                "subtitle": context["subtitle"],
+                "headers": context["headers"],
+                "rows": context["table"],
+            }
+        ],
+    )
+
+
+@permission_required("academics.view_scorerecord")
+@require_GET
+def class_results_pdf(request, pk):
+    context = _class_results_export_context(request, pk)
+    course_class = context["course_class"]
+    filename = f"results-{course_class.pk}-{timezone.localdate().isoformat()}.pdf"
+    response = pdf_response(request, "academics/class_results_print.html", context, filename)
+    if response:
+        return response
+    messages.info(request, "សូមជ្រើស Save as PDF ក្នុងប្រអប់ Print។")
+    return redirect(context["print_url"])
 
 
 @permission_required("academics.view_scorerecord")

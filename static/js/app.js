@@ -1,4 +1,163 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const initCombobox = (select) => {
+    if (select.closest("[data-combobox-root]")) return;
+    const wrap = document.createElement("div");
+    wrap.className = "combobox";
+    wrap.dataset.comboboxRoot = "";
+    select.parentNode.insertBefore(wrap, select);
+    wrap.appendChild(select);
+    select.classList.add("combobox-select");
+    select.tabIndex = -1;
+
+    const input = document.createElement("input");
+    input.type = "search";
+    input.className = "form-input";
+    input.autocomplete = "off";
+    input.setAttribute("role", "combobox");
+    input.setAttribute("aria-autocomplete", "list");
+    input.setAttribute("aria-expanded", "false");
+    if (select.id) {
+      input.id = `${select.id}_search`;
+      const label = document.querySelector(`label[for="${select.id}"]`);
+      if (label) label.setAttribute("for", input.id);
+    }
+    input.placeholder = select.dataset.comboboxPlaceholder || "វាយស្វែងរក";
+
+    const list = document.createElement("ul");
+    list.className = "combobox-list";
+    list.hidden = true;
+    list.setAttribute("role", "listbox");
+    wrap.append(input, list);
+
+    let activeIndex = -1;
+    let visible = [];
+
+    const options = () => Array.from(select.options).filter((opt) => opt.value);
+    const selectedText = () => (select.value && select.selectedOptions[0] ? select.selectedOptions[0].text : "");
+    const syncFromSelect = () => {
+      input.value = selectedText();
+    };
+
+    const close = () => {
+      list.hidden = true;
+      input.setAttribute("aria-expanded", "false");
+      activeIndex = -1;
+    };
+
+    const place = () => {
+      const rect = input.getBoundingClientRect();
+      list.style.position = "fixed";
+      list.style.left = `${rect.left}px`;
+      list.style.width = `${rect.width}px`;
+      list.style.top = `${rect.bottom + 4}px`;
+      list.style.maxHeight = `${Math.min(256, Math.max(window.innerHeight - rect.bottom - 12, 120))}px`;
+    };
+
+    const highlight = () => {
+      list.querySelectorAll("[data-combobox-option]").forEach((el, index) => {
+        el.classList.toggle("is-active", index === activeIndex);
+      });
+      list.querySelector(".is-active")?.scrollIntoView({ block: "nearest" });
+    };
+
+    const choose = (value) => {
+      if (select.value !== value) {
+        select.value = value;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+      syncFromSelect();
+      close();
+    };
+
+    const render = (query) => {
+      const needle = (query || "").trim().toLowerCase();
+      visible = options().filter((opt) => {
+        if (!needle) return true;
+        return opt.text.toLowerCase().includes(needle) || opt.value === needle;
+      });
+      list.innerHTML = "";
+      if (!visible.length) {
+        const empty = document.createElement("li");
+        empty.className = "combobox-empty";
+        empty.textContent = "មិនឃើញសិស្សត្រូវនឹងការស្វែងរក។";
+        list.append(empty);
+        activeIndex = -1;
+        return;
+      }
+      visible.forEach((opt) => {
+        const item = document.createElement("li");
+        item.className = "combobox-option";
+        item.dataset.comboboxOption = opt.value;
+        item.setAttribute("role", "option");
+        item.textContent = opt.text;
+        if (opt.value === select.value) item.classList.add("is-selected");
+        item.addEventListener("mousedown", (event) => {
+          event.preventDefault();
+          choose(opt.value);
+        });
+        list.append(item);
+      });
+      const selected = visible.findIndex((opt) => opt.value === select.value);
+      activeIndex = selected >= 0 ? selected : 0;
+      highlight();
+    };
+
+    const open = (query) => {
+      const filter = query !== undefined ? query : (input.value && input.value !== selectedText() ? input.value : "");
+      render(filter);
+      list.hidden = false;
+      input.setAttribute("aria-expanded", "true");
+      place();
+    };
+
+    input.addEventListener("focus", () => open());
+    input.addEventListener("click", () => open());
+    input.addEventListener("input", () => {
+      if (!input.value) {
+        choose("");
+        open("");
+        return;
+      }
+      open(input.value);
+    });
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        if (list.hidden) open();
+        activeIndex = Math.min(visible.length - 1, activeIndex + 1);
+        highlight();
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        activeIndex = Math.max(0, activeIndex - 1);
+        highlight();
+      } else if (event.key === "Enter" && !list.hidden && visible[activeIndex]) {
+        event.preventDefault();
+        choose(visible[activeIndex].value);
+      } else if (event.key === "Escape") {
+        close();
+        syncFromSelect();
+      }
+    });
+    input.addEventListener("blur", () => {
+      window.setTimeout(() => {
+        close();
+        syncFromSelect();
+      }, 120);
+    });
+    select.addEventListener("change", syncFromSelect);
+    select.form?.addEventListener("reset", () => queueMicrotask(syncFromSelect));
+    select.addEventListener("invalid", (event) => {
+      event.preventDefault();
+      input.focus();
+      open();
+    });
+    document.addEventListener("scroll", () => { if (!list.hidden) place(); }, true);
+    window.addEventListener("resize", () => { if (!list.hidden) place(); });
+    syncFromSelect();
+  };
+
+  document.querySelectorAll("select[data-combobox]").forEach(initCombobox);
+
   const sidebar = document.querySelector("[data-sidebar]");
   const overlay = document.querySelector("[data-sidebar-overlay]");
   const openButton = document.querySelector("[data-sidebar-open]");
@@ -96,6 +255,12 @@ document.addEventListener("DOMContentLoaded", () => {
         resetAdd();
         if (button.dataset.course && form?.elements.course) {
           form.elements.course.value = button.dataset.course;
+        }
+        const enrollmentId = new URLSearchParams(window.location.search).get("enrollment")
+          || button.dataset.enrollment;
+        if (enrollmentId && form?.elements.enrollment) {
+          form.elements.enrollment.value = enrollmentId;
+          form.elements.enrollment.dispatchEvent(new Event("change"));
         }
         openModal(formModal);
       });

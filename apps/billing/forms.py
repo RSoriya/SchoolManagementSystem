@@ -26,14 +26,24 @@ class DataSelect(forms.Select):
 
 class EnrollmentChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
-        return f"{obj.student.student_id} · {obj.student.name_kh} · {obj.course_class.name}"
+        student = obj.student
+        name = student.name_kh
+        if student.name_en:
+            name = f"{student.name_kh} ({student.name_en})"
+        return f"{student.student_id} · {name} · {obj.course_class.name}"
 
 
 class PaymentForm(forms.Form):
     enrollment = EnrollmentChoiceField(
         label="សិស្ស / ថ្នាក់",
         queryset=Enrollment.objects.none(),
-        widget=forms.Select(attrs=INPUT_ATTRS),
+        widget=forms.Select(
+            attrs={
+                **INPUT_ATTRS,
+                "data-combobox": "1",
+                "data-combobox-placeholder": "វាយស្វែងរក ID ឈ្មោះ ឬថ្នាក់",
+            }
+        ),
     )
     paid_on = forms.DateField(
         label="ថ្ងៃបង់",

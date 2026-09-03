@@ -172,7 +172,7 @@ class BillingTests(TestCase):
 
     def test_payment_form_payload_includes_remaining(self):
         self._pay(tuition_amount=Decimal("10.00"), next_due_date=None)
-        response = self.client.get(reverse("billing:payment_create"))
+        response = self.client.get(reverse("billing:payment_list"))
         self.assertContains(response, '"remaining": "20.00"')
         self.assertContains(response, "នៅជំពាក់")
 
@@ -230,22 +230,36 @@ class BillingTests(TestCase):
 
     def test_payment_form_payload_includes_suggested_next_due(self):
         response = self.client.get(reverse("billing:payment_create"))
-        self.assertContains(response, '"next_due": "2026-09-01"')
-        self.assertContains(response, "បង់ផ្នែកខ្លះ នៅ Due Date ដដែល")
+        self.assertRedirects(response, f"{reverse('billing:payment_list')}?open=add")
+        listing = self.client.get(reverse("billing:payment_list"))
+        self.assertContains(listing, '"next_due": "2026-09-01"')
+        self.assertContains(listing, "បង់ផ្នែកខ្លះ នៅ Due Date ដដែល")
 
     def test_payment_form_prefills_next_due_from_enrollment(self):
         response = self.client.get(
             reverse("billing:payment_create"),
             {"enrollment": self.enrollment.pk},
         )
-        self.assertContains(response, 'name="next_due_date"')
-        self.assertContains(response, 'value="2026-09-01"')
+        self.assertRedirects(
+            response,
+            f"{reverse('billing:payment_list')}?open=add&enrollment={self.enrollment.pk}",
+        )
+        listing = self.client.get(
+            reverse("billing:payment_list"),
+            {"open": "add", "enrollment": self.enrollment.pk},
+        )
+        self.assertContains(listing, 'name="next_due_date"')
+        self.assertContains(listing, 'value="2026-09-01"')
 
     def test_payment_list_has_serial_and_collect_button(self):
         self._pay()
         response = self.client.get(reverse("billing:payment_list"))
         self.assertContains(response, "ល.រ")
         self.assertContains(response, "ទទួលបង់ប្រាក់")
+        self.assertContains(response, "data-add-open")
+        self.assertContains(response, 'data-modal="form-modal"')
+        self.assertContains(response, "data-combobox")
+        self.assertContains(response, "វាយស្វែងរកតាម ID ឈ្មោះ ឬថ្នាក់")
         self.assertContains(response, "RCP-")
 
     def test_viewing_receipt_opens_popup_on_list(self):

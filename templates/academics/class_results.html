@@ -1,14 +1,86 @@
 {% extends "base.html" %}
 
+{% block extra_head %}
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 16mm 10mm 18mm;
+    }
+    @page {
+      @top-left {
+        content: "{{ school.school_name|escapejs }}";
+        font-family: "Kantumruy Pro", "Noto Sans Khmer", sans-serif;
+        font-size: 10pt;
+        font-weight: 600;
+        color: #0f172a;
+      }
+      @top-right {
+        content: "{{ page_title|escapejs }}";
+        font-family: "Kantumruy Pro", "Noto Sans Khmer", sans-serif;
+        font-size: 10pt;
+        color: #334155;
+      }
+      @bottom-left {
+        content: "{{ course_class.course.name|escapejs }} · និទ្ទេស A ៩០–១០០ · B ៨០–៨៩ · C ៧០–៧៩ · D ៦០–៦៩ · E ៥០–៥៩ · F ក្រោម ៥០";
+        font-family: "Kantumruy Pro", "Noto Sans Khmer", sans-serif;
+        font-size: 8pt;
+        color: #475569;
+      }
+      @bottom-right {
+        content: counter(page) " / " counter(pages);
+        font-family: "Kantumruy Pro", "Noto Sans Khmer", sans-serif;
+        font-size: 10pt;
+        color: #334155;
+      }
+    }
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 16mm 10mm 18mm;
+      }
+      .report-print-header,
+      .results-print-footer {
+        display: block !important;
+        font-family: "Kantumruy Pro", "Noto Sans Khmer", sans-serif !important;
+      }
+      .report-print-header {
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+      }
+      .report-print-header .print-title {
+        font-size: 16pt;
+        font-weight: 700;
+        color: #0f172a;
+      }
+      .results-print-footer {
+        font-size: 9pt;
+        color: #475569;
+      }
+    }
+  </style>
+{% endblock %}
+
 {% block main_overflow %}overflow-hidden{% endblock %}
 
 {% block content %}
+  <div class="report-print-header mb-4 hidden print:block">
+    <p class="print-title">{{ school.school_name }}</p>
+    <p class="text-sm">{{ page_title }} · {{ course_class.course.name }}</p>
+    {% if school.address %}<p class="text-xs text-slate-500">{{ school.address }}{% if school.phone %} · {{ school.phone }}{% endif %}</p>{% endif %}
+  </div>
+
   <div class="page-list">
-    <div class="page-toolbar">
+    <div class="page-toolbar no-print">
       <form method="get" class="flex min-w-0 flex-1 flex-wrap items-center gap-3">
         <a href="{{ course_class.get_absolute_url }}" class="btn-quiet shrink-0">← {{ course_class.name }}</a>
         {% include "includes/per_page.html" %}
       </form>
+      <div class="flex flex-wrap gap-2">
+        <a href="{{ course_class.get_results_excel_url }}" class="btn-secondary">Excel</a>
+        <a href="{{ course_class.get_results_pdf_url }}" class="btn-secondary">PDF</a>
+        <button type="button" class="btn-primary" data-report-print>បោះពុម្ព</button>
+      </div>
     </div>
 
     <div class="panel page-list-panel">
@@ -69,7 +141,7 @@
         </table>
       </div>
       {% if result_rows.paginator.count %}
-        <nav class="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-sm text-slate-500" aria-label="និទ្ទេស">
+        <nav class="results-print-footer flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 text-sm text-slate-500" aria-label="និទ្ទេស">
           <span>
             {{ course_class.course.name }}
             · {% if assessments %}{{ assessments|length }} ប្រឡង{% else %}មិនទាន់មានប្រឡង{% endif %}
@@ -79,8 +151,33 @@
             {% endfor %}
           </span>
         </nav>
-        {% include "includes/pagination.html" with page=result_rows extra_query=extra_query %}
+        <div class="no-print">
+          {% include "includes/pagination.html" with page=result_rows extra_query=extra_query %}
+        </div>
       {% endif %}
     </div>
   </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    (function () {
+      const originalTitle = document.title;
+      window.addEventListener("beforeprint", function () {
+        document.title = " ";
+      });
+      window.addEventListener("afterprint", function () {
+        document.title = originalTitle;
+      });
+      if (new URLSearchParams(window.location.search).get("print") === "1") {
+        window.print();
+      }
+      const button = document.querySelector("[data-report-print]");
+      if (button) {
+        button.addEventListener("click", function () {
+          window.print();
+        });
+      }
+    })();
+  </script>
 {% endblock %}

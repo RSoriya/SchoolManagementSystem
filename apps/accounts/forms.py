@@ -33,6 +33,11 @@ class AdminAuthenticationForm(AuthenticationForm):
             }
         ),
     )
+    remember_me = forms.BooleanField(
+        label="ចងចាំខ្ញុំ",
+        required=False,
+        widget=forms.CheckboxInput(),
+    )
 
     def confirm_login_allowed(self, user):
         super().confirm_login_allowed(user)

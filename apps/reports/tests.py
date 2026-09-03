@@ -88,10 +88,12 @@ class ReportTests(TestCase):
         html = response.content.decode()
         from_pos = html.find("id_date_from")
         to_pos = html.find("id_date_to")
-        grid_pos = html.find("sm:grid-cols-2 xl:grid-cols-4")
+        course_pos = html.find("id_course")
         self.assertLess(from_pos, to_pos)
-        self.assertLess(to_pos, grid_pos)
-        self.assertIn("flex flex-col gap-4", html)
+        self.assertLess(to_pos, course_pos)
+        self.assertIn("flex flex-wrap items-end", html)
+        self.assertIn("w-52 max-w-full", html)
+        self.assertNotIn("xl:grid-cols-4", html)
 
     def test_excel_export_contains_amount(self):
         self._pay()

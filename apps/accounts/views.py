@@ -19,6 +19,8 @@ from .permissions import admin_required
 from .roles import ROLE_LABELS, ensure_staff_role, user_role
 from .services import can_deactivate
 
+REMEMBER_USERNAME_COOKIE = "remember_username"
+
 
 def _client_ip(request):
     forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
@@ -61,10 +63,43 @@ class ThrottledLoginView(LoginView):
         )
         return super().form_invalid(form)
 
+    def get_initial(self):
+        initial = super().get_initial()
+        username = (self.request.COOKIES.get(REMEMBER_USERNAME_COOKIE) or "").strip()
+        if username:
+            initial["username"] = username
+            initial["remember_me"] = True
+        return initial
+
+    def _remember_cookie_kwargs(self):
+        from django.conf import settings
+
+        return {
+            "max_age": getattr(settings, "SESSION_REMEMBER_ME_AGE", 60 * 60 * 24 * 30),
+            "httponly": True,
+            "samesite": "Lax",
+            "secure": bool(getattr(settings, "SESSION_COOKIE_SECURE", False)),
+            "path": "/",
+        }
+
     def form_valid(self, form):
+        from django.conf import settings
+
         cache.delete(self._throttle_key())
         ensure_staff_role(form.get_user())
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        remember_age = getattr(settings, "SESSION_REMEMBER_ME_AGE", 60 * 60 * 24 * 30)
+        if form.cleaned_data.get("remember_me"):
+            self.request.session.set_expiry(remember_age)
+            response.set_cookie(
+                REMEMBER_USERNAME_COOKIE,
+                form.cleaned_data.get("username") or "",
+                **self._remember_cookie_kwargs(),
+            )
+        else:
+            self.request.session.set_expiry(0)
+            response.delete_cookie(REMEMBER_USERNAME_COOKIE, path="/")
+        return response
 
 
 def _user_list_response(request, form=None, open_form_modal=False):

@@ -37,12 +37,45 @@
     @apply box-border block w-full min-w-0 max-w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-3.5 text-base text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100;
   }
 
+  .combobox {
+    @apply relative;
+  }
+
+  .combobox-select {
+    @apply pointer-events-none absolute h-px w-px overflow-hidden opacity-0;
+  }
+
+  .combobox-list {
+    @apply z-[100] overflow-y-auto rounded-2xl border border-slate-200 bg-white py-1 shadow-lg shadow-slate-900/10;
+  }
+
+  .combobox-option {
+    @apply cursor-pointer px-3.5 py-2.5 text-sm text-slate-800;
+  }
+
+  .combobox-option.is-active,
+  .combobox-option.is-selected.is-active {
+    @apply bg-brand-50 text-brand-800;
+  }
+
+  .combobox-option.is-selected {
+    @apply font-semibold text-brand-800;
+  }
+
+  .combobox-empty {
+    @apply px-3.5 py-3 text-sm text-slate-400;
+  }
+
   .table-control {
     @apply box-border w-auto min-w-40 max-w-52 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-base text-slate-900 outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400;
   }
 
   .date-field {
     @apply min-w-0 w-full max-w-full;
+  }
+
+  .report-filters .form-input {
+    @apply px-3 py-2;
   }
 
   .settings-file {

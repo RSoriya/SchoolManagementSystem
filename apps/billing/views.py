@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -18,7 +20,7 @@ from .services import collect_payment, enrollment_payload, payable_enrollments, 
 
 
 def _extra_query(request):
-    return extra_query(request, drop=("page", "view", "print"))
+    return extra_query(request, drop=("page", "view", "print", "open", "enrollment"))
 
 
 def _error_message(exc):
@@ -43,9 +45,21 @@ def _view_receipt(request):
     )
 
 
-@permission_required("billing.view_payment")
-@require_GET
-def payment_list(request):
+def _payment_form(request, form=None):
+    if form is not None:
+        return form
+    initial = {"paid_on": timezone.localdate()}
+    enrollment_id = request.GET.get("enrollment", "").strip()
+    if enrollment_id.isdigit():
+        initial["enrollment"] = int(enrollment_id)
+    return PaymentForm(initial=initial)
+
+
+def _enrollment_payloads():
+    return {str(item.pk): enrollment_payload(item) for item in payable_enrollments()}
+
+
+def _payment_list_response(request, form=None, open_form_modal=False):
     query = request.GET.get("q", "").strip()
     status = request.GET.get("status", "").strip()
     payments = Payment.objects.select_related(
@@ -80,9 +94,18 @@ def payment_list(request):
             "payloads": {str(item.pk): payment_payload(item) for item in page.object_list},
             "refund_form": RefundForm(),
             "view_receipt": view_receipt,
-            "open_receipt_modal": bool(view_receipt),
+            "open_receipt_modal": bool(view_receipt) and not open_form_modal,
+            "form": _payment_form(request, form),
+            "enrollment_payloads": _enrollment_payloads(),
+            "open_form_modal": open_form_modal,
         },
     )
+
+
+@permission_required("billing.view_payment")
+@require_GET
+def payment_list(request):
+    return _payment_list_response(request)
 
 
 @permission_required("billing.collect_payment")
@@ -117,16 +140,20 @@ def payment_create(request):
             return redirect(payment.receipt)
         except ValidationError as exc:
             form.add_error(None, _error_message(exc))
-    enrollments = payable_enrollments()
+    if request.method == "GET":
+        params = {"open": "add"}
+        if enrollment_id.isdigit():
+            params["enrollment"] = enrollment_id
+        return redirect(f"{reverse('billing:payment_list')}?{urlencode(params)}")
+    if request.POST.get("from_modal"):
+        return _payment_list_response(request, form=form, open_form_modal=True)
     return render(
         request,
         "billing/payment_form.html",
         {
             "page_title": "ទទួលបង់ប្រាក់",
             "form": form,
-            "enrollment_payloads": {
-                str(item.pk): enrollment_payload(item) for item in enrollments
-            },
+            "enrollment_payloads": _enrollment_payloads(),
         },
     )
 

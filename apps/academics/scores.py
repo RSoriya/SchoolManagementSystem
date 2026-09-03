@@ -187,6 +187,42 @@ def class_result_table(course_class):
     return {"assessments": assessments, "rows": rows}
 
 
+def class_result_export_table(course_class):
+    table = class_result_table(course_class)
+    headers = ["ល.រ", "ID", "ឈ្មោះ", "ភេទ"]
+    headers.extend(assessment.name for assessment in table["assessments"])
+    headers.extend(["សរុប", "មធ្យម", "និទ្ទេស"])
+    rows = []
+    for index, row in enumerate(table["rows"], start=1):
+        student = row["student"]
+        name = student.name_kh
+        if student.name_en:
+            name = f"{student.name_kh} ({student.name_en})"
+        cells = [index, student.student_id, name, student.get_gender_display()]
+        cells.extend(
+            exam["score"] if exam["score"] is not None else "—"
+            for exam in row["exam_scores"]
+        )
+        if row["total"] is not None:
+            grade = row["grade"] or {}
+            cells.extend(
+                [
+                    f"{row['total']} / {row['total_max']}",
+                    f"{row['percent']}%",
+                    f"{grade.get('code', '')} {grade.get('label', '')}".strip() or "—",
+                ]
+            )
+        else:
+            cells.extend(["—", "—", "—"])
+        rows.append(cells)
+    return {
+        "assessments": table["assessments"],
+        "headers": headers,
+        "rows": rows,
+        "result_rows": table["rows"],
+    }
+
+
 def score_register(course_class, assessment=None):
     table = class_result_table(course_class)
     for row in table["rows"]:

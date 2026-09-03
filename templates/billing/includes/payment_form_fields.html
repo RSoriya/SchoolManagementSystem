@@ -1,0 +1,109 @@
+{% if form.non_field_errors %}
+  <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+  </div>
+{% endif %}
+
+<section>
+  <h3 class="mb-4 text-lg font-bold text-slate-900">សិស្ស និងថ្នាក់</h3>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div class="sm:col-span-2">
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ form.enrollment.id_for_label }}">{{ form.enrollment.label }}</label>
+      {{ form.enrollment }}
+      <p class="mt-1.5 text-sm text-slate-500">វាយស្វែងរកតាម ID ឈ្មោះ ឬថ្នាក់។</p>
+      {% for error in form.enrollment.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+    <div class="date-field min-w-0">
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ form.paid_on.id_for_label }}">{{ form.paid_on.label }}</label>
+      {{ form.paid_on }}
+      {% for error in form.paid_on.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+    <div class="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+      <p>រូបិយប័ណ្ណ៖ <strong data-currency-label class="text-slate-900">—</strong></p>
+      <p class="mt-1">ថ្លៃវគ្គ៖ <strong data-fee-label class="text-slate-900">—</strong></p>
+      <p class="mt-1">បានបង់រយៈពេលនេះ៖ <strong data-paid-label class="text-slate-900">—</strong></p>
+      <p class="mt-1">នៅជំពាក់៖ <strong data-remaining-label class="text-slate-900">—</strong></p>
+      <p class="mt-1">Due Date បច្ចុប្បន្ន៖ <strong data-due-label class="text-slate-900">—</strong></p>
+    </div>
+  </div>
+</section>
+
+<section class="mt-6">
+  <h3 class="mb-1 text-lg font-bold text-slate-900">ធាតុថ្លៃ</h3>
+  <p class="mb-4 text-sm text-slate-500">អាចបង់ផ្នែកខ្លះ។ ថ្លៃសិក្សាមិនលើសចំនួននៅជំពាក់។ បញ្ចុះតម្លៃ និងអាហារូបករត្រូវកត់ជាធាតុដាច់ដោយឡែក។ ថ្លៃយឺតបញ្ចូលដោយដៃ។</p>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ form.tuition_amount.id_for_label }}">{{ form.tuition_amount.label }}</label>
+      {{ form.tuition_amount }}
+      {% for error in form.tuition_amount.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+    <div>
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ form.registration_fee.id_for_label }}">{{ form.registration_fee.label }}</label>
+      {{ form.registration_fee }}
+      {% for error in form.registration_fee.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+    <div>
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ form.late_fee.id_for_label }}">{{ form.late_fee.label }}</label>
+      {{ form.late_fee }}
+      {% for error in form.late_fee.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+    <div>
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ form.discount_amount.id_for_label }}">{{ form.discount_amount.label }}</label>
+      {{ form.discount_amount }}
+      {% for error in form.discount_amount.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+    <div>
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ form.scholarship_amount.id_for_label }}">{{ form.scholarship_amount.label }}</label>
+      {{ form.scholarship_amount }}
+      {% for error in form.scholarship_amount.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+    <div class="flex items-end">
+      <div class="w-full rounded-2xl bg-brand-50 px-4 py-3">
+        <p class="text-sm font-semibold text-brand-700">សរុបត្រូវបង់</p>
+        <p class="mt-1 text-2xl font-bold text-brand-800" data-total>—</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="mt-6">
+  <h3 class="mb-4 text-lg font-bold text-slate-900">វិធីបង់ និងរយៈពេល</h3>
+  <div class="grid gap-5 sm:grid-cols-2">
+    <div>
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ form.method.id_for_label }}">{{ form.method.label }}</label>
+      {{ form.method }}
+      {% for error in form.method.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+    <div data-reference-wrap>
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ form.transaction_reference.id_for_label }}">{{ form.transaction_reference.label }}</label>
+      {{ form.transaction_reference }}
+      {% for error in form.transaction_reference.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+    <div class="sm:col-span-2">
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ form.period_label.id_for_label }}">{{ form.period_label.label }}</label>
+      {{ form.period_label }}
+      {% for error in form.period_label.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+    <div class="date-field min-w-0 col-span-full xl:col-span-1">
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ form.period_start.id_for_label }}">{{ form.period_start.label }}</label>
+      {{ form.period_start }}
+      {% for error in form.period_start.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+    <div class="date-field min-w-0 col-span-full xl:col-span-1">
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ form.period_end.id_for_label }}">{{ form.period_end.label }}</label>
+      {{ form.period_end }}
+      {% for error in form.period_end.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+    <div class="date-field min-w-0 col-span-full xl:col-span-1">
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ form.next_due_date.id_for_label }}">{{ form.next_due_date.label }}</label>
+      {{ form.next_due_date }}
+      <p class="mt-1.5 text-sm text-slate-500">{{ form.next_due_date.help_text }}</p>
+      {% for error in form.next_due_date.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+    <div>
+      <label class="mb-2 block font-semibold text-slate-700" for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
+      {{ form.note }}
+      {% for error in form.note.errors %}<p class="mt-1.5 text-sm text-red-600">{{ error }}</p>{% endfor %}
+    </div>
+  </div>
+</section>

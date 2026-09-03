@@ -15,7 +15,7 @@ from apps.core.services import get_school_settings
 
 from .models import NotificationLog
 
-TELEGRAM_API = "https://api.telegram.org/bot{token}/sendMessage"
+TELEGRAM_API = "https://api.telegram.org/bot{token}/{method}"
 
 
 def telegram_credentials():
@@ -30,26 +30,79 @@ def telegram_configured():
     return bool(token and chat_id)
 
 
-def send_telegram_message(text, *, user=None):
-    token, chat_id = telegram_credentials()
-    if not token or not chat_id:
-        raise ValidationError("មិនទាន់កំណត់ Telegram Bot Token ឬ Admin Chat ID។")
-    payload = urllib.parse.urlencode(
-        {"chat_id": chat_id, "text": text, "disable_web_page_preview": "true"}
-    ).encode()
+def _explain_telegram_error(description):
+    text = (description or "").lower()
+    if "chat not found" in text:
+        return "រកមិនឃើញ Admin chat។ បើក Bot រួចចុច Start សិន បន្ទាប់មកយក Chat ID ថ្មី។"
+    if "unauthorized" in text:
+        return "Bot Token ខុស ឬផុតសុពលភាព។"
+    if "blocked" in text:
+        return "Admin បានទប់ Bot។ បើក Bot រួចចុច Start ម្ដងទៀត។"
+    if "bot can't initiate conversation" in text:
+        return "Bot មិនអាចផ្ញើមុនបានទេ។ បើក Bot រួចចុច Start សិន។"
+    return f"មិនអាចផ្ញើ Telegram៖ {description or 'បដិសេធសារ'}"
+
+
+def _telegram_request(method, payload=None):
+    token, _chat_id = telegram_credentials()
+    if not token:
+        raise ValidationError("មិនទាន់កំណត់ Telegram Bot Token។")
+    data = urllib.parse.urlencode(payload).encode() if payload else None
     request = urllib.request.Request(
-        TELEGRAM_API.format(token=token),
-        data=payload,
-        method="POST",
+        TELEGRAM_API.format(token=token, method=method),
+        data=data,
+        method="POST" if data else "GET",
     )
     try:
         with urllib.request.urlopen(request, timeout=15) as response:
             body = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        raw = exc.read().decode("utf-8", errors="replace")
+        try:
+            body = json.loads(raw)
+        except json.JSONDecodeError:
+            body = {}
+        raise ValidationError(_explain_telegram_error(body.get("description") or exc.reason)) from exc
     except urllib.error.URLError as exc:
-        raise ValidationError(f"មិនអាចផ្ញើ Telegram៖ {exc.reason}") from exc
+        raise ValidationError(f"មិនអាចភ្ជាប់ Telegram៖ {exc.reason}") from exc
     if not body.get("ok"):
-        raise ValidationError(body.get("description") or "Telegram បដិសេធសារ។")
+        raise ValidationError(_explain_telegram_error(body.get("description")))
     return body
+
+
+def send_telegram_message(text, *, user=None):
+    token, chat_id = telegram_credentials()
+    if not token or not chat_id:
+        raise ValidationError("មិនទាន់កំណត់ Telegram Bot Token ឬ Admin Chat ID។")
+    return _telegram_request(
+        "sendMessage",
+        {"chat_id": chat_id, "text": text, "disable_web_page_preview": "true"},
+    )
+
+
+def detect_admin_chat_id():
+    body = _telegram_request("getUpdates")
+    for update in reversed(body.get("result") or []):
+        for key in ("message", "edited_message", "my_chat_member", "chat_member"):
+            chat = (update.get(key) or {}).get("chat") or {}
+            chat_id = chat.get("id")
+            if chat_id:
+                return str(chat_id)
+    raise ValidationError("មិនទាន់មានសារពី Admin។ បើក Bot រួចចុច Start សិន។")
+
+
+def apply_detected_chat_id(*, user=None):
+    chat_id = detect_admin_chat_id()
+    school = get_school_settings()
+    school.telegram_admin_chat_id = chat_id
+    school.save(update_fields=["telegram_admin_chat_id"])
+    log_event(
+        action=AuditEvent.Action.SETTINGS_UPDATED,
+        summary=f"យក Telegram Admin Chat ID {chat_id}",
+        user=user,
+        obj=school,
+    )
+    return chat_id
 
 
 def _format_alert(enrollment, kind, school, days):

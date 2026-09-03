@@ -414,7 +414,11 @@ def void_payment(payment, *, user=None, reason=""):
         raise ValidationError("ការបង់ដែលបានសងប្រាក់មិនអាចលុបចោលបានទេ។")
 
     with transaction.atomic():
-        payment = Payment.objects.select_for_update().select_related("enrollment", "receipt").get(pk=payment.pk)
+        payment = (
+            Payment.objects.select_for_update(of=("self",))
+            .select_related("enrollment", "receipt")
+            .get(pk=payment.pk)
+        )
         if payment.status != Payment.Status.COMPLETED:
             raise ValidationError("អាចលុបចោលបានតែការបង់ដែលបានបង់។")
         payment.status = Payment.Status.VOIDED
@@ -451,7 +455,7 @@ def refund_payment(payment, *, method, reason, refunded_on=None, user=None):
 
     refunded_on = refunded_on or timezone.localdate()
     with transaction.atomic():
-        payment = Payment.objects.select_for_update().select_related("enrollment", "student").get(pk=payment.pk)
+        payment = Payment.objects.select_for_update(of=("self",)).select_related("enrollment", "student").get(pk=payment.pk)
         if payment.status != Payment.Status.COMPLETED:
             raise ValidationError("ការបង់នេះត្រូវបានសង ឬលុបចោលរួចហើយ។")
         refund = Refund.objects.create(

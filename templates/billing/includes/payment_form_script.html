@@ -1,0 +1,104 @@
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const form = document.querySelector("[data-payment-form]");
+    if (!form) return;
+    const payloadNode = document.getElementById("enrollment-payloads");
+    const payloads = payloadNode ? JSON.parse(payloadNode.textContent) : {};
+    const enrollment = form.querySelector('[name="enrollment"]');
+    const method = form.querySelector('[name="method"]');
+    const moneyFields = ["tuition_amount", "registration_fee", "late_fee", "discount_amount", "scholarship_amount"];
+    const referenceWrap = form.querySelector("[data-reference-wrap]");
+    const reference = form.querySelector('[name="transaction_reference"]');
+    const nextDue = form.querySelector('[name="next_due_date"]');
+
+    const parseAmount = (value) => Number.parseFloat(value || "0") || 0;
+
+    const formatMoney = (amount, currency) => {
+      if (currency === "KHR") {
+        return "៛" + Math.round(amount).toLocaleString("en-US");
+      }
+      return "$" + amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    const applyEnrollment = (overwrite = false) => {
+      const data = payloads[enrollment.value];
+      const currencyLabel = form.querySelector("[data-currency-label]");
+      const feeLabel = form.querySelector("[data-fee-label]");
+      const paidLabel = form.querySelector("[data-paid-label]");
+      const remainingLabel = form.querySelector("[data-remaining-label]");
+      const dueLabel = form.querySelector("[data-due-label]");
+      if (!data) {
+        if (currencyLabel) currencyLabel.textContent = "—";
+        if (feeLabel) feeLabel.textContent = "—";
+        if (paidLabel) paidLabel.textContent = "—";
+        if (remainingLabel) remainingLabel.textContent = "—";
+        if (dueLabel) dueLabel.textContent = "—";
+        if (nextDue) nextDue.required = false;
+        recalc();
+        return;
+      }
+      if (currencyLabel) currencyLabel.textContent = data.currency;
+      if (feeLabel) feeLabel.textContent = data.money;
+      if (paidLabel) paidLabel.textContent = data.money_paid || "—";
+      if (remainingLabel) remainingLabel.textContent = data.money_remaining || "—";
+      if (dueLabel) dueLabel.textContent = data.due || "—";
+      const tuitionDefault = data.remaining || data.fee;
+      if (overwrite || !form.tuition_amount.value) form.tuition_amount.value = tuitionDefault;
+      if (data.period_label && (overwrite || !form.period_label.value)) form.period_label.value = data.period_label;
+      if (data.period_start && (overwrite || !form.period_start.value)) form.period_start.value = data.period_start;
+      if (data.period_end && (overwrite || !form.period_end.value)) form.period_end.value = data.period_end;
+      syncNextDue(overwrite);
+      if (nextDue) nextDue.required = false;
+      recalc();
+    };
+
+    const syncNextDue = (overwrite = false) => {
+      const data = payloads[enrollment.value];
+      if (!nextDue || !data) return;
+      const remaining = parseAmount(data.remaining);
+      const tuition = parseAmount(form.tuition_amount.value);
+      if (remaining > 0 && tuition + 0.001 < remaining) {
+        if (overwrite || data.due) nextDue.value = data.due || "";
+      } else if (data.next_due && (overwrite || !nextDue.value)) {
+        nextDue.value = data.next_due;
+      }
+    };
+
+    const recalc = () => {
+      const data = payloads[enrollment.value] || {};
+      const tuition = parseAmount(form.tuition_amount.value);
+      const registration = parseAmount(form.registration_fee.value);
+      const late = parseAmount(form.late_fee.value);
+      const discount = parseAmount(form.discount_amount.value);
+      const scholarship = parseAmount(form.scholarship_amount.value);
+      const total = tuition + registration + late - discount - scholarship;
+      const totalEl = form.querySelector("[data-total]");
+      if (totalEl) totalEl.textContent = formatMoney(total, data.currency || "USD");
+    };
+
+    const toggleReference = () => {
+      const selected = method?.selectedOptions?.[0];
+      const needs = selected?.dataset.requiresReference === "1";
+      if (reference) reference.required = Boolean(needs);
+      if (referenceWrap) referenceWrap.classList.toggle("hidden", !needs && Boolean(selected?.value));
+      if (!needs && selected?.value && reference) reference.value = "";
+    };
+
+    enrollment?.addEventListener("change", () => applyEnrollment(true));
+    method?.addEventListener("change", toggleReference);
+    moneyFields.forEach((name) => {
+      form.querySelector(`[name="${name}"]`)?.addEventListener("input", () => {
+        if (name === "tuition_amount") syncNextDue(true);
+        recalc();
+      });
+    });
+    form.addEventListener("reset", () => {
+      queueMicrotask(() => {
+        applyEnrollment();
+        toggleReference();
+      });
+    });
+    applyEnrollment();
+    toggleReference();
+  });
+</script>

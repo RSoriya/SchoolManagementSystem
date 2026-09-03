@@ -87,44 +87,17 @@ class CourseClassForm(forms.ModelForm):
         return instance
 
 
-class EnrollStudentForm(forms.Form):
-    course_class = forms.ModelChoiceField(
-        label="ថ្នាក់រៀន",
-        queryset=CourseClass.objects.none(),
-        widget=forms.Select(attrs=INPUT_ATTRS),
-    )
-    next_due_date = forms.DateField(
-        label="Due Date",
-        required=False,
-        input_formats=["%Y-%m-%d"],
-        widget=forms.DateInput(attrs={**INPUT_ATTRS, "type": "date"}, format="%Y-%m-%d"),
-    )
-    note = forms.CharField(
-        label="កំណត់ចំណាំ",
-        required=False,
-        widget=forms.TextInput(attrs=INPUT_ATTRS),
-    )
-
-    def __init__(self, *args, student=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        taken_ids = Enrollment.objects.filter(
-            student=student,
-            status=Enrollment.Status.ACTIVE,
-        ).values_list("course_class_id", flat=True)
-        self.fields["course_class"].queryset = (
-            CourseClass.objects.filter(is_active=True)
-            .exclude(pk__in=taken_ids)
-            .select_related("course")
-            .order_by("name")
-        )
-        self.fields["next_due_date"].input_formats = ["%Y-%m-%d"]
-
-
 class EnrollIntoClassForm(forms.Form):
     student = forms.ModelChoiceField(
         label="សិស្ស",
         queryset=Student.objects.filter(is_active=True).order_by("name_kh"),
-        widget=forms.Select(attrs=INPUT_ATTRS),
+        widget=forms.Select(
+            attrs={
+                **INPUT_ATTRS,
+                "data-combobox": "1",
+                "data-combobox-placeholder": "វាយស្វែងរក ID ឬឈ្មោះសិស្ស",
+            }
+        ),
     )
     next_due_date = forms.DateField(
         label="Due Date",
@@ -137,6 +110,12 @@ class EnrollIntoClassForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs=INPUT_ATTRS),
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["student"].label_from_instance = lambda obj: (
+            f"{obj.student_id} · {obj.name_kh}" + (f" ({obj.name_en})" if obj.name_en else "")
+        )
 
 
 class AssessmentForm(forms.ModelForm):

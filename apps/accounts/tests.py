@@ -19,6 +19,51 @@ class LoginTests(TestCase):
     def test_login_page_loads(self):
         response = self.client.get(reverse("accounts:login"))
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "ចងចាំខ្ញុំ")
+        self.assertContains(response, "remember_me")
+
+    def test_remember_me_keeps_username_after_logout(self):
+        self.client.post(
+            reverse("accounts:login"),
+            {"username": "admin", "password": "secure-test-password", "remember_me": "on"},
+        )
+        self.client.post(reverse("accounts:logout"))
+        page = self.client.get(reverse("accounts:login"))
+        self.assertContains(page, 'value="admin"')
+        form = page.context["form"]
+        self.assertEqual(form["username"].value(), "admin")
+        self.assertTrue(form["remember_me"].value())
+
+    def test_remember_me_keeps_session(self):
+        response = self.client.post(
+            reverse("accounts:login"),
+            {"username": "admin", "password": "secure-test-password", "remember_me": "on"},
+        )
+        self.assertRedirects(response, reverse("dashboard:index"))
+        self.assertFalse(self.client.session.get_expire_at_browser_close())
+        self.assertGreaterEqual(self.client.session.get_expiry_age(), 60 * 60 * 24 * 29)
+
+    def test_login_without_remember_me_clears_saved_username(self):
+        self.client.post(
+            reverse("accounts:login"),
+            {"username": "admin", "password": "secure-test-password", "remember_me": "on"},
+        )
+        self.client.post(reverse("accounts:logout"))
+        self.client.post(
+            reverse("accounts:login"),
+            {"username": "admin", "password": "secure-test-password"},
+        )
+        self.client.post(reverse("accounts:logout"))
+        page = self.client.get(reverse("accounts:login"))
+        self.assertNotEqual(page.context["form"]["username"].value(), "admin")
+
+    def test_login_without_remember_me_expires_with_browser(self):
+        response = self.client.post(
+            reverse("accounts:login"),
+            {"username": "admin", "password": "secure-test-password"},
+        )
+        self.assertRedirects(response, reverse("dashboard:index"))
+        self.assertTrue(self.client.session.get_expire_at_browser_close())
 
     def test_login_succeeds_with_csrf_check(self):
         client = Client(enforce_csrf_checks=True)
@@ -224,7 +269,7 @@ class StaffRoleTests(TestCase):
     def test_cashier_can_collect_but_not_manage_settings(self):
         self.client.force_login(self.cashier)
         self.assertEqual(self.client.get(reverse("billing:payment_list")).status_code, 200)
-        self.assertEqual(self.client.get(reverse("billing:payment_create")).status_code, 200)
+        self.assertEqual(self.client.get(reverse("billing:payment_create"), follow=True).status_code, 200)
         self.assertEqual(self.client.get(reverse("core:settings")).status_code, 403)
         self.assertEqual(self.client.get(reverse("users:list")).status_code, 403)
         self.assertEqual(self.client.get(reverse("audit:list")).status_code, 403)
@@ -276,9 +321,12 @@ class StaffRoleTests(TestCase):
         self.assertEqual(own_sheet.status_code, 200)
         self.assertContains(own_sheet, "រក្សាទុកវត្តមាន")
         self.assertEqual(self.client.get(self.own_class.get_results_url()).status_code, 200)
+        self.assertEqual(self.client.get(self.own_class.get_results_excel_url()).status_code, 200)
         self.assertEqual(self.client.get(self.other_class.get_absolute_url()).status_code, 404)
         self.assertEqual(self.client.get(self.other_class.get_attendance_url()).status_code, 404)
         self.assertEqual(self.client.get(self.other_class.get_results_url()).status_code, 404)
+        self.assertEqual(self.client.get(self.other_class.get_results_excel_url()).status_code, 404)
+        self.assertEqual(self.client.get(self.other_class.get_results_pdf_url()).status_code, 404)
         response = self.client.post(
             self.own_class.get_attendance_url(),
             {
@@ -303,6 +351,8 @@ class StaffRoleTests(TestCase):
         self.assertEqual(self.client.get(self.own_class.get_attendance_url()).status_code, 403)
         self.assertEqual(self.client.get(self.own_class.get_scores_url()).status_code, 403)
         self.assertEqual(self.client.get(self.own_class.get_results_url()).status_code, 403)
+        self.assertEqual(self.client.get(self.own_class.get_results_excel_url()).status_code, 403)
+        self.assertEqual(self.client.get(self.own_class.get_results_pdf_url()).status_code, 403)
         self.assertEqual(self.client.get(reverse("reports:detail", args=["attendance"])).status_code, 403)
         nav = self.client.get(reverse("dashboard:index"))
         self.assertNotContains(nav, 'href="/attendance/"')

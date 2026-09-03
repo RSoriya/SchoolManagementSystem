@@ -1,7 +1,8 @@
 from datetime import date, time, timedelta
 from decimal import Decimal
-from io import StringIO
+from io import BytesIO, StringIO
 from unittest.mock import patch
+import urllib.error
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -17,7 +18,7 @@ from apps.billing.services import due_soon_enrollments, overdue_enrollments
 from apps.core.models import SchoolSettings
 from apps.core.services import get_school_settings
 from apps.notifications.models import NotificationLog
-from apps.notifications.services import send_due_alerts, send_test_message
+from apps.notifications.services import apply_detected_chat_id, send_due_alerts, send_test_message
 from apps.students.models import Student
 
 
@@ -158,3 +159,41 @@ class NotificationTests(TestCase):
         )
         with self.assertRaises(ValidationError):
             log.delete()
+
+    def test_chat_not_found_explains_start(self):
+        error = urllib.error.HTTPError(
+            "https://api.telegram.org/bottest/sendMessage",
+            400,
+            "Bad Request",
+            hdrs=None,
+            fp=BytesIO(b'{"ok":false,"error_code":400,"description":"Bad Request: chat not found"}'),
+        )
+        with patch("apps.notifications.services.urllib.request.urlopen", side_effect=error):
+            with self.assertRaises(ValidationError) as ctx:
+                send_test_message(user=self.user)
+        self.assertIn("Start", ctx.exception.messages[0])
+
+    def test_detects_admin_chat_id_from_bot_start(self):
+        class FakeUpdates:
+            def read(self):
+                return (
+                    b'{"ok":true,"result":[{"update_id":1,"message":'
+                    b'{"chat":{"id":111222333,"type":"private"},"text":"/start"}}]}'
+                )
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+        with patch("apps.notifications.services.urllib.request.urlopen", return_value=FakeUpdates()):
+            chat_id = apply_detected_chat_id(user=self.user)
+        self.assertEqual(chat_id, "111222333")
+        self.assertEqual(get_school_settings().telegram_admin_chat_id, "111222333")
+
+    def test_settings_shows_detect_chat_and_error_column(self):
+        response = self.client.get(reverse("core:settings"))
+        self.assertContains(response, "យក Chat ID")
+        self.assertContains(response, "កំហុស")
+        self.assertContains(response, "telegram/chat-id/")

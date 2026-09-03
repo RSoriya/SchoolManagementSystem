@@ -95,6 +95,116 @@ class BackupTests(TestCase):
         self.assertContains(response, "ព័ត៌មានសាលា")
         self.assertContains(response, "វិធីបង់ប្រាក់")
         self.assertContains(response, "Telegram")
+        self.assertContains(response, "data-add-open")
+        self.assertContains(response, "កែ")
+        self.assertContains(response, "លុប")
+        self.assertContains(response, "data-delete-id")
+        self.assertNotContains(response, "xl:grid-cols-4")
+
+    def test_can_add_and_edit_payment_method(self):
+        user = get_user_model().objects.create_user(username="admin", password="secure-test-password")
+        self.client.force_login(user)
+        created = self.client.post(
+            reverse("core:payment_method_create"),
+            {
+                "name": "TrueMoney",
+                "code": "truemoney",
+                "requires_reference": "on",
+                "is_active": "on",
+                "sort_order": "6",
+                "from_modal": "1",
+            },
+        )
+        self.assertRedirects(created, reverse("core:settings"))
+        from apps.core.models import PaymentMethod
+
+        method = PaymentMethod.objects.get(code="truemoney")
+        self.assertTrue(method.requires_reference)
+        listing = self.client.get(reverse("core:settings"))
+        self.assertContains(listing, "TrueMoney")
+        edited = self.client.post(
+            reverse("core:payment_method_edit", args=[method.pk]),
+            {
+                "name": "TrueMoney KH",
+                "code": "truemoney",
+                "is_active": "on",
+                "sort_order": "6",
+                "from_modal": "1",
+            },
+        )
+        self.assertRedirects(edited, reverse("core:settings"))
+        method.refresh_from_db()
+        self.assertEqual(method.name, "TrueMoney KH")
+        self.assertFalse(method.requires_reference)
+
+    def test_can_delete_unused_payment_method(self):
+        user = get_user_model().objects.create_user(username="admin", password="secure-test-password")
+        self.client.force_login(user)
+        from apps.core.models import PaymentMethod
+
+        method = PaymentMethod.objects.create(
+            name="TrueMoney",
+            code="truemoney",
+            requires_reference=True,
+            is_active=True,
+            sort_order=9,
+        )
+        deleted = self.client.post(reverse("core:payment_method_delete", args=[method.pk]), follow=True)
+        self.assertFalse(PaymentMethod.objects.filter(pk=method.pk).exists())
+        self.assertContains(deleted, "បានលុបវិធីបង់ប្រាក់ TrueMoney។")
+
+    def test_cannot_delete_payment_method_with_history(self):
+        from datetime import date, time
+        from decimal import Decimal
+
+        user = get_user_model().objects.create_user(username="admin", password="secure-test-password")
+        self.client.force_login(user)
+        from apps.academics.models import Course, CourseClass
+        from apps.academics.services import enroll_student
+        from apps.billing.services import collect_payment
+        from apps.core.models import PaymentMethod
+        from apps.students.models import Student
+
+        method = PaymentMethod.objects.create(
+            name="TrueMoney",
+            code="truemoney",
+            requires_reference=False,
+            is_active=True,
+            sort_order=9,
+        )
+        course = Course.objects.create(
+            name="English Level 1",
+            fee_type=Course.FeeType.MONTHLY,
+            default_fee=Decimal("30.00"),
+            currency="USD",
+        )
+        course_class = CourseClass.objects.create(
+            course=course,
+            name="Morning",
+            start_date=date(2026, 8, 1),
+            study_days=[0, 2, 4],
+            start_time=time(8, 0),
+            end_time=time(9, 30),
+        )
+        student = Student.objects.create(
+            name_kh="សុខា",
+            name_en="Sokha",
+            gender=Student.Gender.MALE,
+            phone="012345678",
+        )
+        enrollment = enroll_student(student, course_class, user=user, next_due_date=date(2026, 8, 1))
+        collect_payment(
+            enrollment=enrollment,
+            paid_on=date(2026, 8, 1),
+            tuition_amount=Decimal("30.00"),
+            method=method,
+            period_label="សីហា 2026",
+            next_due_date=date(2026, 9, 1),
+            user=user,
+        )
+        blocked = self.client.post(reverse("core:payment_method_delete", args=[method.pk]), follow=True)
+        self.assertTrue(PaymentMethod.objects.filter(pk=method.pk).exists())
+        self.assertContains(blocked, "មិនអាចលុបវិធីបង់ដែលមានប្រវត្តិបង់ ឬសងប្រាក់។")
 
     def test_settings_save_shows_toast(self):
         user = get_user_model().objects.create_user(username="admin", password="secure-test-password")

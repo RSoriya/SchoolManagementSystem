@@ -21,7 +21,7 @@
         {% include "includes/per_page.html" %}
         <button type="submit" class="btn-secondary">ស្វែងរក</button>
       </form>
-      <a href="{% url 'billing:payment_create' %}" class="btn-primary">+ ទទួលបង់ប្រាក់</a>
+      <a href="{% url 'billing:payment_list' %}?open=add" class="btn-primary">+ ទទួលបង់ប្រាក់</a>
     </div>
 
     <div class="panel page-list-panel no-print">

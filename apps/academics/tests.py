@@ -487,6 +487,34 @@ class ScoreTests(TestCase):
         self.assertContains(page, "ប្រឡងកណ្ដាលវគ្គ")
         self.assertContains(page, "Quiz 1")
         self.assertContains(page, "និទ្ទេស")
+        self.assertContains(page, "A4 landscape")
+        self.assertContains(page, "Kantumruy Pro")
+        self.assertContains(page, "Excel")
+        self.assertContains(page, "PDF")
+        self.assertContains(page, self.course_class.get_results_excel_url())
+        self.assertContains(page, self.course_class.get_results_pdf_url())
+
+        from io import BytesIO
+
+        from openpyxl import load_workbook
+
+        excel = self.client.get(self.course_class.get_results_excel_url())
+        self.assertEqual(
+            excel["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        values = [cell.value for row in load_workbook(BytesIO(excel.content)).active.iter_rows() for cell in row]
+        self.assertTrue(any(value and "សុខា" in str(value) for value in values))
+        self.assertTrue(any(value == "និទ្ទេស" for value in values))
+        self.assertTrue(any(value and str(value).startswith("B ") for value in values))
+
+        pdf = self.client.get(self.course_class.get_results_pdf_url())
+        if pdf.status_code == 200:
+            self.assertEqual(pdf["Content-Type"], "application/pdf")
+        else:
+            self.assertEqual(pdf.status_code, 302)
+            self.assertIn("print=1", pdf["Location"])
+
         listing = self.client.get(reverse("academics:class_score_sheet", args=[self.course_class.pk, midterm.pk]))
         self.assertRedirects(
             listing,

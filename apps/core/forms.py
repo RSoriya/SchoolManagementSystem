@@ -105,6 +105,21 @@ class PaymentMethodForm(forms.ModelForm):
         fields = ["name", "code", "requires_reference", "is_active", "sort_order"]
         widgets = {
             "name": forms.TextInput(attrs=INPUT_ATTRS),
-            "code": forms.TextInput(attrs=INPUT_ATTRS),
-            "sort_order": forms.NumberInput(attrs=INPUT_ATTRS),
+            "code": forms.TextInput(attrs={**INPUT_ATTRS, "placeholder": "ឧ. cash"}),
+            "sort_order": forms.NumberInput(attrs={**INPUT_ATTRS, "min": "0"}),
         }
+        help_texts = {
+            "code": "កូដខ្លីសម្រាប់ប្រព័ន្ធ។ មិនប្ដូរបន្ទាប់ពីមានការបង់។",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.is_bound and not self.instance.pk:
+            last = (
+                PaymentMethod.objects.order_by("-sort_order")
+                .values_list("sort_order", flat=True)
+                .first()
+            )
+            self.fields["sort_order"].initial = (last or 0) + 1
+            self.fields["is_active"].initial = True
+

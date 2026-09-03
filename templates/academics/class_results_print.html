@@ -1,0 +1,77 @@
+{% load static %}
+<!doctype html>
+<html lang="km">
+<head>
+  <meta charset="utf-8">
+  <title>{{ page_title }} · {{ school.school_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&family=Noto+Sans+Khmer:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 16mm 10mm 18mm;
+    }
+    @page {
+      @top-left {
+        content: "{{ school.school_name|escapejs }}";
+        font-family: "Kantumruy Pro", "Noto Sans Khmer", sans-serif;
+        font-size: 10pt;
+        font-weight: 600;
+        color: #0f172a;
+      }
+      @top-right {
+        content: "{{ page_title|escapejs }}";
+        font-family: "Kantumruy Pro", "Noto Sans Khmer", sans-serif;
+        font-size: 10pt;
+        color: #334155;
+      }
+      @bottom-left {
+        content: "{{ course_class.course.name|escapejs }} · និទ្ទេស A ៩០–១០០ · B ៨០–៨៩ · C ៧០–៧៩ · D ៦០–៦៩ · E ៥០–៥៩ · F ក្រោម ៥០";
+        font-family: "Kantumruy Pro", "Noto Sans Khmer", sans-serif;
+        font-size: 8pt;
+        color: #475569;
+      }
+      @bottom-right {
+        content: counter(page) " / " counter(pages);
+        font-family: "Kantumruy Pro", "Noto Sans Khmer", sans-serif;
+        font-size: 10pt;
+        color: #334155;
+      }
+    }
+    body { background: white; font-family: "Kantumruy Pro", "Noto Sans Khmer", sans-serif; }
+    .print-header, .print-footer { font-family: "Kantumruy Pro", "Noto Sans Khmer", sans-serif; }
+    .print-title { font-size: 16pt; font-weight: 700; }
+  </style>
+</head>
+<body class="bg-white p-6 font-sans text-slate-800">
+  <header class="print-header mb-6 border-b border-slate-200 pb-4">
+    <p class="print-title">{{ school.school_name }}</p>
+    <p>{{ page_title }}</p>
+    <p class="text-sm text-slate-500">{{ course_class.course.name }}{% if school.phone %} · {{ school.phone }}{% endif %}</p>
+  </header>
+  <table class="data-table">
+    <thead>
+      <tr>
+        {% for header in headers %}<th>{{ header }}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in table %}
+        <tr>
+          {% for cell in row %}<td>{{ cell }}</td>{% endfor %}
+        </tr>
+      {% empty %}
+        <tr><td colspan="{{ headers|length }}">មិនមានសិស្សកំពុងរៀនក្នុងថ្នាក់នេះ។</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="print-footer mt-4 text-xs text-slate-500">
+    និទ្ទេស
+    {% for code, label, band in grade_legend %}
+      {{ code }} {{ band }}{% if not forloop.last %} ·{% endif %}
+    {% endfor %}
+  </p>
+</body>
+</html>

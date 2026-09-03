@@ -9,10 +9,10 @@ from apps.accounts.permissions import permission_required
 from apps.accounts.roles import user_has_perm
 from apps.accounts.scoping import get_visible_student, visible_classes, visible_enrollments, visible_students
 from apps.academics.attendance import student_attendance_counts, student_attendance_history
-from apps.academics.forms import EnrollStudentForm, TransferEnrollmentForm
+from apps.academics.forms import TransferEnrollmentForm
 from apps.academics.models import CourseClass, Enrollment
 from apps.academics.scores import student_score_history
-from apps.academics.services import enroll_student, set_enrollment_status, transfer_enrollment
+from apps.academics.services import set_enrollment_status, transfer_enrollment
 from apps.audit.models import AuditEvent
 from apps.audit.services import log_event
 from apps.billing.services import PAYABLE_STATUSES, attach_period_balances
@@ -98,7 +98,6 @@ def student_detail(request, student_id):
         request.user,
         student.enrollments.select_related("course_class__course", "transferred_from"),
     )
-    enroll_form = EnrollStudentForm(student=student)
     if user_has_perm(request.user, "billing.view_payment"):
         payments = student.payments.select_related("receipt", "method", "course_class").order_by(
             "-paid_on", "-created_at"
@@ -112,8 +111,6 @@ def student_detail(request, student_id):
         "page_title": student.display_name,
         "student": student,
         "enrollments": attach_period_balances(enrollments),
-        "enroll_form": enroll_form,
-        "can_enroll": enroll_form.fields["course_class"].queryset.exists(),
         "active_enrollments": enrollments.filter(status=Enrollment.Status.ACTIVE),
         "payments": payments,
         "can_pay": enrollments.filter(status__in=PAYABLE_STATUSES).exists(),
@@ -171,28 +168,6 @@ def student_delete(request, student_id):
     student.delete()
     messages.success(request, "បានលុបសិស្ស។")
     return redirect("students:list")
-
-
-@permission_required("students.enroll_student")
-@require_POST
-def enroll(request, student_id):
-    student = get_visible_student(request.user, student_id=student_id)
-    form = EnrollStudentForm(request.POST, student=student)
-    if form.is_valid():
-        try:
-            enroll_student(
-                student,
-                form.cleaned_data["course_class"],
-                user=request.user,
-                note=form.cleaned_data.get("note") or "",
-                next_due_date=form.cleaned_data.get("next_due_date"),
-            )
-            messages.success(request, "បានចុះឈ្មោះសិស្សក្នុងថ្នាក់។")
-        except ValidationError as exc:
-            messages.error(request, exc.messages[0] if hasattr(exc, "messages") else str(exc))
-    else:
-        messages.error(request, "សូមជ្រើសថ្នាក់រៀន។")
-    return redirect(student)
 
 
 @permission_required("academics.change_enrollment_status")

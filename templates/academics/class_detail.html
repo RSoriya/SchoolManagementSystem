@@ -90,7 +90,7 @@
                 <td class="text-right">
                   {% if can.collect_payment %}
                     {% if enrollment.status == "active" or enrollment.status == "suspended" %}
-                    <a href="{% url 'billing:payment_create' %}?enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
+                    <a href="{% url 'billing:payment_list' %}?open=add&enrollment={{ enrollment.pk }}" class="btn-quiet">បង់</a>
                     {% endif %}
                   {% endif %}
                 </td>
