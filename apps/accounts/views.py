@@ -23,8 +23,10 @@ REMEMBER_USERNAME_COOKIE = "remember_username"
 
 
 def _client_ip(request):
+    from django.conf import settings
+
     forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    if forwarded:
+    if forwarded and getattr(settings, "USE_X_FORWARDED_HOST", False):
         return forwarded.split(",")[0].strip()
     return request.META.get("REMOTE_ADDR", "")
 

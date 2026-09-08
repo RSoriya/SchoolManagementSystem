@@ -17,6 +17,6 @@ ENV DJANGO_SETTINGS_MODULE=config.settings.development
 RUN python manage.py collectstatic --noinput
 
 ENV DJANGO_SETTINGS_MODULE=config.settings.production
-RUN sed -i 's/\r$//' /app/scripts/docker-entrypoint.sh && chmod +x /app/scripts/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /app/scripts/*.sh && chmod +x /app/scripts/*.sh
 EXPOSE 8000
 CMD ["./scripts/docker-entrypoint.sh"]

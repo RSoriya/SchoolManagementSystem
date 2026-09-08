@@ -1,0 +1,117 @@
+# App Platform template for one school.
+# Copy into the DigitalOcean control panel or doctl. Never put real secrets in Git.
+#
+# Replace:
+#   REPLACE_SCHOOL_CODE  e.g. hoa-cheang
+#   REPLACE_APP_HOST     e.g. school-hoa-cheang-xxxx.ondigitalocean.app
+#   GitHub repo/branch if different
+#
+# After create, add these as encrypted secrets in the dashboard (do not commit values):
+#   SECRET_KEY, SPACES_KEY, SPACES_SECRET
+#
+# Use Managed PostgreSQL (production: true). Do not use the $7 Dev Database.
+
+name: school-REPLACE_SCHOOL_CODE
+region: sgp
+
+envs:
+  - key: DJANGO_SETTINGS_MODULE
+    scope: RUN_TIME
+    value: "config.settings.production"
+  - key: PORT
+    scope: RUN_TIME
+    value: "8080"
+  - key: GUNICORN_WORKERS
+    scope: RUN_TIME
+    value: "2"
+  - key: DB_ENGINE
+    scope: RUN_TIME
+    value: "postgresql"
+  - key: DB_SSLMODE
+    scope: RUN_TIME
+    value: "require"
+  - key: DATABASE_URL
+    scope: RUN_TIME
+    value: "${db.DATABASE_URL}"
+  - key: ALLOWED_HOSTS
+    scope: RUN_TIME
+    value: "REPLACE_APP_HOST"
+  - key: CSRF_TRUSTED_ORIGINS
+    scope: RUN_TIME
+    value: "https://REPLACE_APP_HOST"
+  - key: SCHOOL_TIME_ZONE
+    scope: RUN_TIME
+    value: "Asia/Phnom_Penh"
+  - key: SPACES_REGION
+    scope: RUN_TIME
+    value: "sgp1"
+  - key: SPACES_ENDPOINT
+    scope: RUN_TIME
+    value: "https://sgp1.digitaloceanspaces.com"
+  - key: SPACES_BUCKET
+    scope: RUN_TIME
+    value: "school-REPLACE_SCHOOL_CODE"
+  - key: SPACES_MEDIA_LOCATION
+    scope: RUN_TIME
+    value: "media"
+  - key: SPACES_BACKUP_PREFIX
+    scope: RUN_TIME
+    value: "backups"
+
+services:
+  - name: web
+    dockerfile_path: Dockerfile
+    github:
+      repo: RSoriya/SchoolManagementSystem
+      branch: main
+      deploy_on_push: false
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    run_command: ./scripts/app-platform-web.sh
+    health_check:
+      http_path: /healthz/
+
+jobs:
+  - name: migrate
+    kind: PRE_DEPLOY
+    dockerfile_path: Dockerfile
+    github:
+      repo: RSoriya/SchoolManagementSystem
+      branch: main
+      deploy_on_push: false
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    run_command: ./scripts/app-platform-migrate.sh
+  - name: backup
+    kind: SCHEDULED
+    schedule:
+      cron: "0 2 * * *"
+      time_zone: Asia/Phnom_Penh
+    dockerfile_path: Dockerfile
+    github:
+      repo: RSoriya/SchoolManagementSystem
+      branch: main
+      deploy_on_push: false
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    run_command: ./scripts/app-platform-backup.sh
+  - name: due-alerts
+    kind: SCHEDULED
+    schedule:
+      cron: "0 7 * * *"
+      time_zone: Asia/Phnom_Penh
+    dockerfile_path: Dockerfile
+    github:
+      repo: RSoriya/SchoolManagementSystem
+      branch: main
+      deploy_on_push: false
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    run_command: ./scripts/app-platform-alerts.sh
+
+databases:
+  - name: db
+    engine: PG
+    version: "16"
+    production: true

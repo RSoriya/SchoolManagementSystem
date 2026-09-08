@@ -9,6 +9,14 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+from apps.core.spaces import (
+    download_backup,
+    list_remote_backups,
+    prune_remote_backups,
+    spaces_configured,
+    upload_backup,
+)
+
 
 def backup_dir():
     path = Path(settings.BACKUP_DIR)
@@ -31,6 +39,8 @@ def list_backups():
 
 
 def backup_records(limit=8):
+    if spaces_configured():
+        return list_remote_backups()[:limit]
     records = []
     for path in list_backups()[:limit]:
         records.append(
@@ -44,6 +54,8 @@ def backup_records(limit=8):
 
 
 def prune_backups():
+    if spaces_configured():
+        return prune_remote_backups()
     cutoff = timezone.now() - timedelta(days=keep_days())
     removed = []
     for path in list_backups():
@@ -63,6 +75,9 @@ def _pg_env():
     env = os.environ.copy()
     if db.get("PASSWORD"):
         env["PGPASSWORD"] = str(db["PASSWORD"])
+    sslmode = (db.get("OPTIONS") or {}).get("sslmode")
+    if sslmode:
+        env["PGSSLMODE"] = str(sslmode)
     return env
 
 
@@ -110,6 +125,8 @@ def create_backup():
         shutil.copy2(db["NAME"], destination)
     else:
         raise ValidationError("ម៉ាស៊ីនទិន្នន័យនេះមិនគាំទ្រការបម្រុងទុកទេ។")
+    if spaces_configured():
+        upload_backup(destination)
     prune_backups()
     return destination
 
@@ -140,6 +157,8 @@ def restore_backup(path, *, yes=False):
     if not yes:
         raise ValidationError("សូមបញ្ជាក់ --yes មុនពេល restore។")
     path = Path(path)
+    if not path.exists() and spaces_configured():
+        path = download_backup(path.name, backup_dir() / path.name)
     verify_backup(path)
     db = settings.DATABASES["default"]
     if "sqlite" in db["ENGINE"]:

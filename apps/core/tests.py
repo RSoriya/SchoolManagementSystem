@@ -1,7 +1,9 @@
 import os
 import sqlite3
 import tempfile
+from datetime import timedelta, timezone as dt_timezone
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -321,3 +323,60 @@ class LanguageSwitchTests(TestCase):
         self.assertIn("Overdue 6 students", html)
         self.assertIn("due soon 0 students", html)
         self.assertNotIn("ជិតto", html)
+
+
+class DatabaseUrlTests(SimpleTestCase):
+    def test_parses_postgres_url_and_sslmode(self):
+        from config.database import config_from_url
+
+        config = config_from_url(
+            "postgres://school:p%40ss@db.example.com:25060/defaultdb?sslmode=require",
+            conn_max_age=30,
+        )
+        self.assertEqual(config["ENGINE"], "django.db.backends.postgresql")
+        self.assertEqual(config["NAME"], "defaultdb")
+        self.assertEqual(config["USER"], "school")
+        self.assertEqual(config["PASSWORD"], "p@ss")
+        self.assertEqual(config["HOST"], "db.example.com")
+        self.assertEqual(config["PORT"], "25060")
+        self.assertEqual(config["CONN_MAX_AGE"], 30)
+        self.assertEqual(config["OPTIONS"]["sslmode"], "require")
+
+
+class SpacesBackupTests(SimpleTestCase):
+    def test_backup_records_read_from_spaces(self):
+        from django.utils import timezone as django_timezone
+
+        from apps.core.backup import backup_records, prune_backups
+
+        old = django_timezone.now() - timedelta(days=40)
+        fresh = django_timezone.now()
+        client = MagicMock()
+        client.list_objects_v2.return_value = {
+            "Contents": [
+                {
+                    "Key": "backups/school_old.dump",
+                    "LastModified": old.astimezone(dt_timezone.utc),
+                    "Size": 2048,
+                },
+                {
+                    "Key": "backups/school_new.dump",
+                    "LastModified": fresh.astimezone(dt_timezone.utc),
+                    "Size": 4096,
+                },
+            ]
+        }
+        with override_settings(
+            SPACES_KEY="key",
+            SPACES_SECRET="secret",
+            SPACES_BUCKET="school-demo",
+            SPACES_REGION="sgp1",
+            SPACES_ENDPOINT="https://sgp1.digitaloceanspaces.com",
+            SPACES_BACKUP_PREFIX="backups",
+            BACKUP_KEEP_DAYS=30,
+        ), patch("apps.core.spaces._client", return_value=client):
+            records = backup_records()
+            self.assertEqual(records[0]["name"], "school_new.dump")
+            removed = prune_backups()
+        self.assertEqual(removed, ["school_old.dump"])
+        client.delete_object.assert_called_once()

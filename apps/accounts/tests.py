@@ -126,6 +126,22 @@ class LoginTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "ច្រើនដងពេក")
 
+    @override_settings(LOGIN_FAILURE_LIMIT=1, LOGIN_FAILURE_WINDOW=900, USE_X_FORWARDED_HOST=True)
+    def test_login_throttle_uses_forwarded_ip_behind_proxy(self):
+        cache.clear()
+        self.client.post(
+            reverse("accounts:login"),
+            {"username": "admin", "password": "wrong-password"},
+            HTTP_X_FORWARDED_FOR="203.0.113.9",
+        )
+        response = self.client.post(
+            reverse("accounts:login"),
+            {"username": "admin", "password": "secure-test-password"},
+            HTTP_X_FORWARDED_FOR="203.0.113.9",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "ច្រើនដងពេក")
+
 
 class UserAdminTests(TestCase):
     def setUp(self):

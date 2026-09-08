@@ -23,6 +23,8 @@ services:
       DJANGO_SETTINGS_MODULE: config.settings.production
       DB_ENGINE: postgresql
       DB_HOST: db
+      DB_SSLMODE: disable
+      ALLOW_FILESYSTEM_MEDIA: "true"
     depends_on:
       db:
         condition: service_healthy

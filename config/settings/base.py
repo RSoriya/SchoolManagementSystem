@@ -3,6 +3,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from config.database import config_from_url
+
 BASE_DIR = Path(__file__).resolve().parents[2]
 load_dotenv(BASE_DIR / ".env")
 
@@ -87,8 +89,17 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
+DATABASE_URL = env("DATABASE_URL", "")
 DATABASE_ENGINE = env("DB_ENGINE", "sqlite").lower()
-if DATABASE_ENGINE == "postgresql":
+if DATABASE_URL:
+    DATABASES = {
+        "default": config_from_url(
+            DATABASE_URL,
+            conn_max_age=int(env("DB_CONN_MAX_AGE", "60")),
+        )
+    }
+    DATABASE_ENGINE = "postgresql"
+elif DATABASE_ENGINE == "postgresql":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
