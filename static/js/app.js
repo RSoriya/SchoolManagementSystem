@@ -73,7 +73,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const needle = (query || "").trim().toLowerCase();
       visible = options().filter((opt) => {
         if (!needle) return true;
-        return opt.text.toLowerCase().includes(needle) || opt.value === needle;
+        const haystack = (opt.dataset.search || opt.text).toLowerCase();
+        return haystack.includes(needle);
       });
       list.innerHTML = "";
       if (!visible.length) {

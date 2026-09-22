@@ -97,15 +97,14 @@ def _build_report(kind, filters, today, user=None):
             for index, payment in enumerate(rows, start=1)
         ]
         kpis = [
-            ("ចំណូលសុទ្ធ USD", summary["net"]["usd"]),
-            ("ចំណូលសុទ្ធ KHR", summary["net"]["khr"]),
-            ("បញ្ចុះតម្លៃ", f"{summary['discount']['usd']} · {summary['discount']['khr']}"),
-            ("អាហារូបករ", f"{summary['scholarship']['usd']} · {summary['scholarship']['khr']}"),
-            ("សងប្រាក់", f"{summary['refunds']['usd']} · {summary['refunds']['khr']}"),
+            ("ចំណូលសុទ្ធ", summary["net"]["khr"]),
+            ("បញ្ចុះតម្លៃ", summary["discount"]["khr"]),
+            ("អាហារូបករ", summary["scholarship"]["khr"]),
+            ("សងប្រាក់", summary["refunds"]["khr"]),
         ]
     elif kind == "paid":
         rows = paid_groups(filters)
-        headers = ["ល.រ", "សិស្ស", "លេខសម្គាល់", "ថ្នាក់", "ចុងក្រោយបង់", "ចំនួនដង", "USD", "KHR"]
+        headers = ["ល.រ", "សិស្ស", "លេខសម្គាល់", "ថ្នាក់", "ចុងក្រោយបង់", "ចំនួនដង", "ចំនួន"]
         table = [
             [
                 index,
@@ -114,17 +113,14 @@ def _build_report(kind, filters, today, user=None):
                 row["course_class"].name,
                 row["last_paid_on"].strftime("%d/%m/%Y"),
                 row["count"],
-                row["totals_display"]["usd"],
                 row["totals_display"]["khr"],
             ]
             for index, row in enumerate(rows, start=1)
         ]
-        usd_total = sum((row["totals"].get("USD") or 0) for row in rows)
         khr_total = sum((row["totals"].get("KHR") or 0) for row in rows)
         kpis = [
             ("សិស្ស/ថ្នាក់បានបង់", str(len(rows))),
-            ("បានបង់ USD", format_money(usd_total, "USD")),
-            ("បានបង់ KHR", format_money(khr_total, "KHR")),
+            ("បានបង់", format_money(khr_total, "KHR")),
         ]
     elif kind == "unpaid":
         rows = list(unpaid_rows(filters, today))
@@ -174,8 +170,7 @@ def _build_report(kind, filters, today, user=None):
         ]
         kpis = [
             ("ចំនួនសង", str(len(rows))),
-            ("សង USD", summary["refunds"]["usd"]),
-            ("សង KHR", summary["refunds"]["khr"]),
+            ("សងប្រាក់", summary["refunds"]["khr"]),
         ]
     elif kind == "attendance":
         classes = visible_classes(user, CourseClass.objects.all()) if user else CourseClass.objects.none()
@@ -311,8 +306,8 @@ def export_excel(request, kind):
                 "title": "តាមវគ្គ",
                 "heading": "ចំណូលតាមវគ្គ",
                 "subtitle": context["period"],
-                "headers": ["វគ្គ", "USD", "KHR"],
-                "rows": [[row["label"], row["usd"], row["khr"]] for row in context["summary"]["by_course"]],
+                "headers": ["វគ្គ", "ចំនួន"],
+                "rows": [[row["label"], row["khr"]] for row in context["summary"]["by_course"]],
             }
         )
         sheets.append(
@@ -320,8 +315,8 @@ def export_excel(request, kind):
                 "title": "តាមថ្នាក់",
                 "heading": "ចំណូលតាមថ្នាក់",
                 "subtitle": context["period"],
-                "headers": ["ថ្នាក់", "USD", "KHR"],
-                "rows": [[row["label"], row["usd"], row["khr"]] for row in context["summary"]["by_class"]],
+                "headers": ["ថ្នាក់", "ចំនួន"],
+                "rows": [[row["label"], row["khr"]] for row in context["summary"]["by_class"]],
             }
         )
     filename = f"report-{kind}-{timezone.localdate().isoformat()}.xlsx"

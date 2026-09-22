@@ -70,7 +70,7 @@
     {% if kind == "attendance" %}
       · ស្ថានភាព៖ វត្តមាន · យឺត · សុំច្បាប់ · អវត្តមាន
     {% else %}
-      · USD និង KHR ដាច់ពីគ្នា
+      · KHR
     {% endif %}
   </p>
 
@@ -94,8 +94,7 @@
             <tr>
               <th class="w-16">ល.រ</th>
               <th>វគ្គ</th>
-              <th>USD</th>
-              <th>KHR</th>
+              <th>ចំនួន</th>
             </tr>
           </thead>
           <tbody>
@@ -103,11 +102,10 @@
               <tr>
                 <td class="text-slate-400">{{ forloop.counter }}</td>
                 <td>{{ row.label }}</td>
-                <td>{{ row.usd }}</td>
                 <td>{{ row.khr }}</td>
               </tr>
             {% empty %}
-              <tr><td colspan="4" class="py-8 text-center text-slate-400">មិនមានទិន្នន័យ។</td></tr>
+              <tr><td colspan="3" class="py-8 text-center text-slate-400">មិនមានទិន្នន័យ។</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -121,8 +119,7 @@
             <tr>
               <th class="w-16">ល.រ</th>
               <th>ថ្នាក់</th>
-              <th>USD</th>
-              <th>KHR</th>
+              <th>ចំនួន</th>
             </tr>
           </thead>
           <tbody>
@@ -130,11 +127,10 @@
               <tr>
                 <td class="text-slate-400">{{ forloop.counter }}</td>
                 <td>{{ row.label }}</td>
-                <td>{{ row.usd }}</td>
                 <td>{{ row.khr }}</td>
               </tr>
             {% empty %}
-              <tr><td colspan="4" class="py-8 text-center text-slate-400">មិនមានទិន្នន័យ។</td></tr>
+              <tr><td colspan="3" class="py-8 text-center text-slate-400">មិនមានទិន្នន័យ។</td></tr>
             {% endfor %}
           </tbody>
         </table>

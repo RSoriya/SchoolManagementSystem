@@ -24,7 +24,7 @@ COURSES = [
         "name_kh": "ភាសាអង់គ្លេស១",
         "fee_type": Course.FeeType.FULL_COURSE,
         "default_fee": Decimal("5.00"),
-        "currency": "USD",
+        "currency": "KHR",
         "description": "វគ្គអង់គ្លេសកម្រិតដំបូង",
     },
     {
@@ -32,7 +32,7 @@ COURSES = [
         "name_kh": "ភាសាអង់គ្លេស២",
         "fee_type": Course.FeeType.FULL_COURSE,
         "default_fee": Decimal("5.00"),
-        "currency": "USD",
+        "currency": "KHR",
         "description": "វគ្គអង់គ្លេសកម្រិតពីរ",
     },
     {
@@ -40,7 +40,7 @@ COURSES = [
         "name_kh": "ភាសាអង់គ្លេស៣",
         "fee_type": Course.FeeType.FULL_COURSE,
         "default_fee": Decimal("5.00"),
-        "currency": "USD",
+        "currency": "KHR",
         "description": "វគ្គអង់គ្លេសកម្រិតបី",
     },
     {
@@ -48,7 +48,7 @@ COURSES = [
         "name_kh": "កុំព្យូទ័រមូលដ្ឋាន១",
         "fee_type": Course.FeeType.MONTHLY,
         "default_fee": Decimal("10.00"),
-        "currency": "USD",
+        "currency": "KHR",
         "description": "វគ្គកុំព្យូទ័រមូលដ្ឋាន",
     },
     {
@@ -56,7 +56,7 @@ COURSES = [
         "name_kh": "កុំព្យូទ័រមូលដ្ឋាន២",
         "fee_type": Course.FeeType.MONTHLY,
         "default_fee": Decimal("10.00"),
-        "currency": "USD",
+        "currency": "KHR",
         "description": "វគ្គកុំព្យូទ័របន្ត",
     },
     {
@@ -64,7 +64,7 @@ COURSES = [
         "name_kh": "កុំព្យូទ័ររដ្ឋបាល",
         "fee_type": Course.FeeType.MONTHLY,
         "default_fee": Decimal("10.00"),
-        "currency": "USD",
+        "currency": "KHR",
         "description": "វគ្គកុំព្យូទ័រសម្រាប់ការិយាល័យ",
     },
     {
@@ -72,7 +72,7 @@ COURSES = [
         "name_kh": "អង់គ្លេសកុមារ",
         "fee_type": Course.FeeType.MONTHLY,
         "default_fee": Decimal("25.00"),
-        "currency": "USD",
+        "currency": "KHR",
         "description": "វគ្គអង់គ្លេសសម្រាប់កុមារ",
     },
     {

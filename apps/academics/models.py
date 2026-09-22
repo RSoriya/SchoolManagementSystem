@@ -17,7 +17,7 @@ class Course(models.Model):
     description = models.TextField("ពិពណ៌នា", blank=True)
     fee_type = models.CharField("ប្រភេទថ្លៃ", max_length=20, choices=FeeType.choices)
     default_fee = models.DecimalField("ថ្លៃសិក្សា", max_digits=12, decimal_places=2)
-    currency = models.CharField("រូបិយប័ណ្ណ", max_length=3, choices=CURRENCY_CHOICES, default="USD")
+    currency = models.CharField("រូបិយប័ណ្ណ", max_length=3, choices=CURRENCY_CHOICES, default="KHR")
     is_active = models.BooleanField("កំពុងប្រើ", default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

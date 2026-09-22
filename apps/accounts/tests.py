@@ -264,7 +264,7 @@ class StaffRoleTests(TestCase):
             name="English Kids",
             fee_type="monthly",
             default_fee=Decimal("30.00"),
-            currency="USD",
+            currency="KHR",
         )
         self.own_class = CourseClass.objects.create(
             course=self.course,

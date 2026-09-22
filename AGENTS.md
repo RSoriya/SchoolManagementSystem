@@ -25,7 +25,7 @@ V2 Phase 3 (done): Class page is a hub. Click **វត្តមាន** for a da
 - Do not hard-delete academic or billing history. Void/cancel/refund must keep the original record.
 - Partial payments allowed. Remaining balance is tracked per period. After a monthly period is paid in full, next due date defaults to +1 calendar month (editable). No automatic monthly invoices.
 - Late fees are manual. Full refunds only in V1.
-- USD and KHR are separate totals. No FX conversion in MVP. Fee and payment use the same currency.
+- Fees and payments use KHR only. No USD. No FX conversion.
 - Student IDs: `STU-YYYY-0001`. Receipts: `RCP-YYYY-000001`.
 - V1 role is Admin only. V2 Phase 1 adds Cashier and Teacher in the same portal via Django Groups. No parent/student portals.
 - Telegram goes to the admin chat only. Defaults: remind 3 days before due date; overdue daily until paid.

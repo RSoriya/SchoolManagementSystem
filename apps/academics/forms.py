@@ -13,15 +13,21 @@ INPUT_ATTRS = {"class": "form-input"}
 class CourseForm(forms.ModelForm):
     class Meta:
         model = Course
-        fields = ["name", "name_kh", "description", "fee_type", "default_fee", "currency", "is_active"]
+        fields = ["name", "name_kh", "description", "fee_type", "default_fee", "is_active"]
         widgets = {
             "name": forms.TextInput(attrs=INPUT_ATTRS),
             "name_kh": forms.TextInput(attrs=INPUT_ATTRS),
             "description": forms.Textarea(attrs={**INPUT_ATTRS, "rows": 3}),
             "fee_type": forms.Select(attrs=INPUT_ATTRS),
-            "default_fee": forms.NumberInput(attrs={**INPUT_ATTRS, "step": "0.01"}),
-            "currency": forms.Select(attrs=INPUT_ATTRS),
+            "default_fee": forms.NumberInput(attrs={**INPUT_ATTRS, "step": "1", "min": "0"}),
         }
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.currency = "KHR"
+        if commit:
+            instance.save()
+        return instance
 
 
 class CourseClassForm(forms.ModelForm):

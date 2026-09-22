@@ -28,7 +28,7 @@ class BillingTests(TestCase):
             name="English Level 1",
             fee_type=Course.FeeType.MONTHLY,
             default_fee=Decimal("30.00"),
-            currency="USD",
+            currency="KHR",
         )
         self.course_class = CourseClass.objects.create(
             course=self.course,
@@ -72,7 +72,7 @@ class BillingTests(TestCase):
         year = timezone.localdate().year
         self.assertEqual(payment.receipt.receipt_number, f"RCP-{year}-000001")
         self.assertEqual(payment.total_amount, Decimal("30.00"))
-        self.assertEqual(payment.currency, "USD")
+        self.assertEqual(payment.currency, "KHR")
         self.enrollment.refresh_from_db()
         self.assertEqual(payment.previous_due_date, date(2026, 8, 1))
         self.assertEqual(self.enrollment.next_due_date, payment.next_due_date)
@@ -259,7 +259,9 @@ class BillingTests(TestCase):
         self.assertContains(response, "data-add-open")
         self.assertContains(response, 'data-modal="form-modal"')
         self.assertContains(response, "data-combobox")
-        self.assertContains(response, "វាយស្វែងរកតាម ID ឈ្មោះ ឬថ្នាក់")
+        self.assertContains(response, "វាយស្វែងរកតាមឈ្មោះសិស្ស។")
+        self.assertContains(response, "វាយស្វែងរកឈ្មោះសិស្ស")
+        self.assertContains(response, 'data-search="សុខា Sokha"')
         self.assertContains(response, "RCP-")
 
     def test_viewing_receipt_opens_popup_on_list(self):
@@ -303,7 +305,7 @@ class BillingTests(TestCase):
     def test_dashboard_shows_revenue(self):
         self._pay()
         response = self.client.get(reverse("dashboard:index"))
-        self.assertContains(response, "$30.00")
+        self.assertContains(response, "៛30")
         self.assertContains(response, "ទទួលបង់ប្រាក់")
         self.assertNotContains(response, "cursor-not-allowed")
 
@@ -348,9 +350,9 @@ class BillingTests(TestCase):
     def test_revenue_nets_refunds(self):
         today = timezone.localdate()
         payment = self._pay()
-        self.assertEqual(revenue_on(today, "USD"), Decimal("30.00"))
+        self.assertEqual(revenue_on(today, "KHR"), Decimal("30.00"))
         refund_payment(payment, method=self.cash, reason="ឈប់រៀន", refunded_on=today, user=self.user)
-        self.assertEqual(revenue_on(today, "USD"), Decimal("0.00"))
+        self.assertEqual(revenue_on(today, "KHR"), Decimal("0.00"))
 
     def test_refund_cannot_be_deleted(self):
         payment = self._pay()

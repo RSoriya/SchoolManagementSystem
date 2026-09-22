@@ -2,7 +2,6 @@ from django import forms
 
 from apps.academics.models import Course, CourseClass
 from apps.billing.models import Payment
-from apps.core.constants import CURRENCY_CHOICES
 from apps.core.models import PaymentMethod
 
 INPUT_ATTRS = {"class": "form-input"}
@@ -44,12 +43,6 @@ class ReportFilterForm(forms.Form):
         queryset=CourseClass.objects.none(),
         widget=forms.Select(attrs=INPUT_ATTRS),
     )
-    currency = forms.ChoiceField(
-        label="រូបិយប័ណ្ណ",
-        required=False,
-        choices=[("", "គ្រប់រូបិយប័ណ្ណ")] + list(CURRENCY_CHOICES),
-        widget=forms.Select(attrs=INPUT_ATTRS),
-    )
     method = forms.ModelChoiceField(
         label="វិធីបង់",
         required=False,
@@ -87,7 +80,6 @@ class ReportFilterForm(forms.Form):
             self.fields.pop("date_to")
             self.fields.pop("method")
             self.fields.pop("status")
-            self.fields.pop("currency")
         elif kind == "paid":
             self.fields.pop("status")
         elif kind == "refunds":
@@ -95,7 +87,6 @@ class ReportFilterForm(forms.Form):
         elif kind == "attendance":
             self.fields.pop("method")
             self.fields.pop("status")
-            self.fields.pop("currency")
 
     def clean(self):
         cleaned = super().clean()

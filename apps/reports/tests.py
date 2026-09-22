@@ -26,7 +26,7 @@ class ReportTests(TestCase):
             name="English Level 1",
             fee_type=Course.FeeType.MONTHLY,
             default_fee=Decimal("30.00"),
-            currency="USD",
+            currency="KHR",
         )
         self.course_class = CourseClass.objects.create(
             course=self.course,
@@ -121,15 +121,14 @@ class ReportTests(TestCase):
         refund_payment(payment, method=self.cash, reason="ឈប់រៀន", user=self.user)
         refunds = self.client.get(reverse("reports:detail", args=["refunds"]))
         self.assertContains(refunds, "ឈប់រៀន")
-        self.assertContains(refunds, "$30.00")
+        self.assertContains(refunds, "៛30")
 
     def test_revenue_nets_refunds_and_keeps_currencies_separate(self):
         payment = self._pay()
         today = timezone.localdate()
         refund_payment(payment, method=self.cash, reason="ឈប់រៀន", refunded_on=today, user=self.user)
-        self.assertEqual(revenue_in_year(today, "USD"), Decimal("0.00"))
+        self.assertEqual(revenue_in_year(today, "KHR"), Decimal("0.00"))
         response = self.client.get(reverse("reports:detail", args=["revenue"]))
-        self.assertContains(response, "$0.00")
         self.assertContains(response, "៛0")
 
     def test_filter_by_class(self):

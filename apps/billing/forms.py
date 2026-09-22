@@ -24,6 +24,17 @@ class DataSelect(forms.Select):
         return option
 
 
+class EnrollmentSelect(forms.Select):
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
+        student = getattr(getattr(value, "instance", None), "student", None)
+        if student is not None:
+            option["attrs"]["data-search"] = " ".join(
+                part for part in (student.name_kh, student.name_en) if part
+            )
+        return option
+
+
 class EnrollmentChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj):
         student = obj.student
@@ -37,11 +48,11 @@ class PaymentForm(forms.Form):
     enrollment = EnrollmentChoiceField(
         label="សិស្ស / ថ្នាក់",
         queryset=Enrollment.objects.none(),
-        widget=forms.Select(
+        widget=EnrollmentSelect(
             attrs={
                 **INPUT_ATTRS,
                 "data-combobox": "1",
-                "data-combobox-placeholder": "វាយស្វែងរក ID ឈ្មោះ ឬថ្នាក់",
+                "data-combobox-placeholder": "វាយស្វែងរកឈ្មោះសិស្ស",
             }
         ),
     )

@@ -8,7 +8,7 @@ alwaysApply: true
 - Keep the existing Django app layout (`accounts`, `students`, `academics`, `billing`, `notifications`, `reports`, `audit`, `dashboard`, `core`). Extend it; do not rebuild.
 - V1 is Admin-only, single branch. V2 Phase 1 adds Cashier and Teacher staff roles in the same portal (Django Groups). Do not add parent/student portals or a switch-role UI.
 - Never hard-delete enrollment, payment, or receipt history. Transfers, voids, and refunds create or flag records.
-- Partial payments allowed. Remaining balance is tracked per period. After a monthly period is paid in full, next due date defaults to +1 calendar month (editable). No auto-generated monthly invoices. No currency conversion.
+- Partial payments allowed. Remaining balance is tracked per period. After a monthly period is paid in full, next due date defaults to +1 calendar month (editable). No auto-generated monthly invoices. KHR only. No currency conversion.
 - Student codes `STU-YYYY-0001`. Receipts `RCP-YYYY-000001`.
 - UI is Khmer-first. Follow existing Tailwind tokens (`brand`, `ink`, `form-input`, `btn-primary`).
 - Full-page `data-table` lists always include per-page (១០/២០) and pagination (`បង្ហាញ … · មុន/បន្ទាប់`), same as Students and Courses.

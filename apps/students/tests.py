@@ -23,7 +23,7 @@ class StudentAndEnrollmentTests(TestCase):
             name="English Level 1",
             fee_type=Course.FeeType.MONTHLY,
             default_fee=Decimal("30.00"),
-            currency="USD",
+            currency="KHR",
         )
         self.class_morning = CourseClass.objects.create(
             course=self.course,

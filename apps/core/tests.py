@@ -178,7 +178,7 @@ class BackupTests(TestCase):
             name="English Level 1",
             fee_type=Course.FeeType.MONTHLY,
             default_fee=Decimal("30.00"),
-            currency="USD",
+            currency="KHR",
         )
         course_class = CourseClass.objects.create(
             course=course,

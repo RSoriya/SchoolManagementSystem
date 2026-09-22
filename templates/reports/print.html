@@ -14,7 +14,7 @@
   <header class="mb-6 border-b border-slate-200 pb-4">
     <p class="text-lg font-bold">{{ school.school_name }}</p>
     <p>{{ page_title }}</p>
-    <p class="text-sm text-slate-500">{{ period }} · USD និង KHR ដាច់ពីគ្នា</p>
+    <p class="text-sm text-slate-500">{{ period }} · KHR</p>
   </header>
   <div class="mb-5 grid grid-cols-2 gap-3">
     {% for label, value in kpis %}
@@ -27,10 +27,10 @@
   {% if kind == "revenue" and summary.by_course %}
     <h2 class="mb-2 font-bold">ចំណូលតាមវគ្គ</h2>
     <table class="data-table mb-5">
-      <thead><tr><th>ល.រ</th><th>វគ្គ</th><th>USD</th><th>KHR</th></tr></thead>
+      <thead><tr><th>ល.រ</th><th>វគ្គ</th><th>ចំនួន</th></tr></thead>
       <tbody>
         {% for row in summary.by_course %}
-          <tr><td>{{ forloop.counter }}</td><td>{{ row.label }}</td><td>{{ row.usd }}</td><td>{{ row.khr }}</td></tr>
+          <tr><td>{{ forloop.counter }}</td><td>{{ row.label }}</td><td>{{ row.khr }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

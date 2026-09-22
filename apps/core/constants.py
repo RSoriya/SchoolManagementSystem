@@ -10,8 +10,9 @@ WEEKDAY_CHOICES = [
 
 WEEKDAY_LABELS = {value: label for value, label in WEEKDAY_CHOICES}
 
+DEFAULT_CURRENCY = "KHR"
+
 CURRENCY_CHOICES = [
-    ("USD", "USD"),
     ("KHR", "KHR"),
 ]
 
@@ -49,12 +50,9 @@ def format_weekdays(days):
     return " · ".join(labels)
 
 
-def format_money(amount, currency):
+def format_money(amount, currency="KHR"):
     from decimal import Decimal, ROUND_HALF_UP
 
     value = Decimal(amount or 0)
-    if currency == "KHR":
-        quantized = value.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
-        return f"៛{quantized:,.0f}"
-    quantized = value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-    return f"${quantized:,.2f}"
+    quantized = value.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    return f"៛{quantized:,.0f}"

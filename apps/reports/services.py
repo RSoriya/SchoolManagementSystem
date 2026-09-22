@@ -23,19 +23,19 @@ def year_range(today=None):
 
 
 def _money():
-    return {"USD": ZERO, "KHR": ZERO}
+    return {"KHR": ZERO}
 
 
 def _add(bucket, currency, amount):
-    bucket[currency] = bucket.get(currency, ZERO) + (amount or ZERO)
+    bucket["KHR"] = bucket.get("KHR", ZERO) + (amount or ZERO)
 
 
 def _display(bucket):
+    amount = bucket.get("KHR", ZERO)
+    formatted = format_money(amount, "KHR")
     return {
-        "usd": format_money(bucket.get("USD", ZERO), "USD"),
-        "khr": format_money(bucket.get("KHR", ZERO), "KHR"),
-        "usd_amount": bucket.get("USD", ZERO),
-        "khr_amount": bucket.get("KHR", ZERO),
+        "khr": formatted,
+        "khr_amount": amount,
     }
 
 
@@ -181,21 +181,17 @@ def revenue_summary(filters):
         _add(by_class[class_key]["outflow"], refund.currency, refund.amount)
 
     net = {
-        "USD": inflow.get("USD", ZERO) - outflow.get("USD", ZERO),
         "KHR": inflow.get("KHR", ZERO) - outflow.get("KHR", ZERO),
     }
 
     def _breakdown(mapping):
         rows = []
         for item in mapping.values():
-            net_usd = item["inflow"].get("USD", ZERO) - item["outflow"].get("USD", ZERO)
             net_khr = item["inflow"].get("KHR", ZERO) - item["outflow"].get("KHR", ZERO)
             rows.append(
                 {
                     "label": item["label"],
-                    "usd": format_money(net_usd, "USD"),
                     "khr": format_money(net_khr, "KHR"),
-                    "usd_amount": net_usd,
                     "khr_amount": net_khr,
                 }
             )

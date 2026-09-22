@@ -86,11 +86,8 @@ def index(request):
             "unpaid_students": unpaid.values("student_id").distinct().count() if show_billing else 0,
             "overdue_students": overdue.values("student_id").distinct().count() if show_billing else 0,
             "due_soon_students": due_soon.values("student_id").distinct().count() if show_billing else 0,
-            "today_usd": format_money(revenue_on(today, "USD"), "USD") if show_billing else "",
             "today_khr": format_money(revenue_on(today, "KHR"), "KHR") if show_billing else "",
-            "month_usd": format_money(revenue_in_month(today, "USD"), "USD") if show_billing else "",
             "month_khr": format_money(revenue_in_month(today, "KHR"), "KHR") if show_billing else "",
-            "year_usd": format_money(revenue_in_year(today, "USD"), "USD") if show_billing else "",
             "year_khr": format_money(revenue_in_year(today, "KHR"), "KHR") if show_billing else "",
         },
         "course_bars": [

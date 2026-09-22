@@ -19,7 +19,7 @@ class CourseClassViewTests(TestCase):
             name="Computer Basic",
             fee_type=Course.FeeType.FULL_COURSE,
             default_fee=Decimal("120.00"),
-            currency="USD",
+            currency="KHR",
         )
 
     def test_create_class_with_schedule(self):
@@ -126,7 +126,7 @@ class AttendanceTests(TestCase):
             name="English Kids",
             fee_type=Course.FeeType.MONTHLY,
             default_fee=Decimal("30.00"),
-            currency="USD",
+            currency="KHR",
         )
         self.course_class = CourseClass.objects.create(
             course=self.course,
@@ -370,7 +370,7 @@ class ScoreTests(TestCase):
             name="English Kids",
             fee_type=Course.FeeType.MONTHLY,
             default_fee=Decimal("30.00"),
-            currency="USD",
+            currency="KHR",
         )
         self.course_class = CourseClass.objects.create(
             course=self.course,

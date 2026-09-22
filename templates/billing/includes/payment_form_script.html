@@ -73,7 +73,7 @@
       const scholarship = parseAmount(form.scholarship_amount.value);
       const total = tuition + registration + late - discount - scholarship;
       const totalEl = form.querySelector("[data-total]");
-      if (totalEl) totalEl.textContent = formatMoney(total, data.currency || "USD");
+      if (totalEl) totalEl.textContent = formatMoney(total, data.currency || "KHR");
     };
 
     const toggleReference = () => {
