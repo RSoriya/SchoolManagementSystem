@@ -1,6 +1,6 @@
 from django.db.models import Q
 
-from .roles import ADMIN_GROUP_NAME, ROLE_GROUP_NAMES, assign_role, is_school_admin
+from .roles import ADMIN_GROUP_NAME, ROLE_GROUP_NAMES, assign_role, is_cashier, is_school_admin, is_teacher
 
 
 def ensure_admin_group(user):
@@ -19,6 +19,16 @@ def active_admin_count():
     )
 
 
+def can_manage_account(actor, target):
+    if not actor or not target:
+        return False
+    if is_school_admin(actor):
+        return True
+    if is_cashier(actor):
+        return is_teacher(target)
+    return False
+
+
 def can_deactivate(target, actor):
     if not target.is_active:
         return False
@@ -26,6 +36,8 @@ def can_deactivate(target, actor):
         return False
     if is_school_admin(target) and active_admin_count() <= 1:
         return False
+    if actor and not is_school_admin(actor):
+        return is_teacher(target)
     return True
 
 

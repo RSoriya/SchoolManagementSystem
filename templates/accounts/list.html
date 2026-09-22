@@ -7,7 +7,7 @@
     data-resource-modals
     class="page-list"
     data-create-url="{{ create_url }}"
-    data-add-title="បន្ថែមអ្នកប្រើ"
+    data-add-title="{{ add_title }}"
     data-edit-title="កែអ្នកប្រើប្រាស់"
     {% if open_form_modal %}data-open-modal="form"{% endif %}
   >
@@ -19,10 +19,10 @@
         {% include "includes/per_page.html" %}
         <button type="submit" class="btn-secondary">ស្វែងរក</button>
       </form>
-      <button type="button" class="btn-primary" data-add-open>+ បន្ថែមអ្នកប្រើ</button>
+      <button type="button" class="btn-primary" data-add-open>+ {{ add_title }}</button>
     </div>
 
-    <p class="mb-4 shrink-0 text-sm text-slate-500">ជ្រើសតួនាទី Admin · អ្នកគិតលុយ · គ្រូ។ ផ្អាកគណនី មិនលុបប្រវត្តិ។</p>
+    <p class="mb-4 shrink-0 text-sm text-slate-500">{% if can_manage_all_users %}ជ្រើសតួនាទី Admin · អ្នកគិតលុយ · គ្រូ។ ផ្អាកគណនី មិនលុបប្រវត្តិ។{% else %}បង្កើតគណនីគ្រូបង្រៀន។ ផ្អាកគណនី មិនលុបប្រវត្តិ។{% endif %}</p>
 
     <div class="panel page-list-panel">
       <div class="page-list-table">
@@ -55,16 +55,18 @@
                 </td>
                 <td>
                   <div class="flex justify-end gap-2">
+                    {% if can_manage_all_users or account.role_name == "Teacher" %}
                     <button type="button" class="btn-quiet" data-edit-id="{{ account.pk }}">កែ</button>
                     {% if account.is_active and account.pk != current_user_id %}
                       <button type="button" class="btn-danger" data-delete-id="{{ account.pk }}">ផ្អាក</button>
+                    {% endif %}
                     {% endif %}
                   </div>
                 </td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="7" class="py-16 text-center text-slate-400">មិនមានអ្នកប្រើ។</td>
+                <td colspan="7" class="py-16 text-center text-slate-400">{% if can_manage_all_users %}មិនមានអ្នកប្រើ។{% else %}មិនមានគ្រូ។{% endif %}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -77,7 +79,7 @@
       <div class="modal-backdrop" data-modal-close></div>
       <div class="modal-panel modal-panel-lg">
         <div class="mb-5 flex items-start justify-between gap-3">
-          <h2 class="text-xl font-bold text-slate-900" data-form-title>បន្ថែមអ្នកប្រើ</h2>
+          <h2 class="text-xl font-bold text-slate-900" data-form-title>{{ add_title }}</h2>
           <button type="button" class="btn-quiet" data-modal-close aria-label="បិទ">✕</button>
         </div>
         <form method="post" action="{{ create_url }}" data-resource-form novalidate>

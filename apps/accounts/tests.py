@@ -287,11 +287,12 @@ class StaffRoleTests(TestCase):
         self.assertEqual(self.client.get(reverse("billing:payment_list")).status_code, 200)
         self.assertEqual(self.client.get(reverse("billing:payment_create"), follow=True).status_code, 200)
         self.assertEqual(self.client.get(reverse("core:settings")).status_code, 403)
-        self.assertEqual(self.client.get(reverse("users:list")).status_code, 403)
+        self.assertEqual(self.client.get(reverse("users:list")).status_code, 200)
         self.assertEqual(self.client.get(reverse("audit:list")).status_code, 403)
         nav = self.client.get(reverse("dashboard:index"))
         self.assertContains(nav, "ការបង់ប្រាក់")
-        self.assertNotContains(nav, reverse("users:list"))
+        self.assertContains(nav, reverse("users:list"))
+        self.assertContains(nav, "គ្រូបង្រៀន")
         self.assertContains(nav, "អ្នកគិតលុយ")
 
     def test_cashier_cannot_void_payment(self):
@@ -346,6 +347,51 @@ class StaffRoleTests(TestCase):
         hub = self.client.get(self.own_class.get_absolute_url())
         self.assertContains(hub, "+ ចុះឈ្មោះសិស្ស")
 
+    def test_cashier_can_create_teacher_not_admin(self):
+        self.client.force_login(self.cashier)
+        listing = self.client.get(reverse("users:list"))
+        self.assertContains(listing, "បន្ថែមគ្រូ")
+        self.assertContains(listing, "គ្រូ")
+        self.assertContains(listing, "teacher")
+        self.assertNotContains(listing, ">admin<")
+        self.assertNotContains(listing, ">cashier<")
+        created = self.client.post(
+            reverse("users:create"),
+            {
+                "username": "newteacher",
+                "full_name_kh": "គ្រូថ្មី",
+                "phone_number": "012999888",
+                "email": "",
+                "password1": "Another-secure-pass1",
+                "password2": "Another-secure-pass1",
+                "is_active": "on",
+                "role": "Teacher",
+            },
+        )
+        self.assertRedirects(created, reverse("users:list"))
+        teacher = self.User.objects.get(username="newteacher")
+        self.assertTrue(teacher.groups.filter(name="Teacher").exists())
+        blocked = self.client.post(
+            reverse("users:create"),
+            {
+                "username": "sneakyadmin",
+                "full_name_kh": "អ្នកគ្រប់គ្រង",
+                "phone_number": "",
+                "email": "",
+                "password1": "Another-secure-pass1",
+                "password2": "Another-secure-pass1",
+                "is_active": "on",
+                "role": "Admin",
+            },
+        )
+        self.assertEqual(blocked.status_code, 200)
+        self.assertFalse(self.User.objects.filter(username="sneakyadmin").exists())
+        self.assertEqual(self.client.get(reverse("users:edit", args=[self.admin.pk])).status_code, 403)
+        self.assertEqual(self.client.post(reverse("users:deactivate", args=[self.admin.pk])).status_code, 302)
+        self.admin.refresh_from_db()
+        self.assertTrue(self.admin.is_active)
+        self.assertEqual(self.client.get(reverse("users:edit", args=[self.teacher.pk])).status_code, 200)
+
     def test_teacher_sees_only_own_classes(self):
         self.client.force_login(self.teacher)
         listing = self.client.get(reverse("academics:class_list"))
@@ -355,6 +401,7 @@ class StaffRoleTests(TestCase):
         self.assertEqual(self.client.get(self.own_class.get_absolute_url()).status_code, 200)
         self.assertEqual(self.client.get(self.other_class.get_absolute_url()).status_code, 404)
         self.assertEqual(self.client.get(reverse("billing:payment_list")).status_code, 403)
+        self.assertEqual(self.client.get(reverse("users:list")).status_code, 403)
         nav = self.client.get(reverse("dashboard:index"))
         self.assertNotContains(nav, reverse("billing:payment_list"))
         self.assertNotContains(nav, 'href="/attendance/"')

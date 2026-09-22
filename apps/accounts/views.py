@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.contrib.auth.views import LoginView
 from django.core.cache import cache
 from django.db.models import Q
@@ -15,9 +16,9 @@ from apps.core.pagination import extra_query, paginate, per_page_value
 from .forms import AdminAuthenticationForm, AdminUserForm
 from .models import User
 from .payloads import user_payload
-from .permissions import admin_required
-from .roles import ROLE_LABELS, ensure_staff_role, user_role
-from .services import can_deactivate
+from .permissions import users_access_required
+from .roles import ROLE_LABELS, TEACHER_GROUP_NAME, ensure_staff_role, is_school_admin, user_role
+from .services import can_deactivate, can_manage_account
 
 REMEMBER_USERNAME_COOKIE = "remember_username"
 
@@ -107,6 +108,8 @@ class ThrottledLoginView(LoginView):
 def _user_list_response(request, form=None, open_form_modal=False):
     query = request.GET.get("q", "").strip()
     users = User.objects.prefetch_related("groups").order_by("username")
+    if not is_school_admin(request.user):
+        users = users.filter(groups__name=TEACHER_GROUP_NAME).distinct()
     if query:
         users = users.filter(
             Q(username__icontains=query)
@@ -122,30 +125,32 @@ def _user_list_response(request, form=None, open_form_modal=False):
         request,
         "accounts/list.html",
         {
-            "page_title": "អ្នកប្រើប្រាស់",
+            "page_title": "អ្នកប្រើប្រាស់" if is_school_admin(request.user) else "គ្រូបង្រៀន",
             "users": page,
             "query": query,
-            "form": form or AdminUserForm(),
+            "form": form or AdminUserForm(actor=request.user),
             "payloads": {str(item.pk): user_payload(item) for item in page.object_list},
             "open_form_modal": open_form_modal,
             "create_url": reverse("users:create"),
             "current_user_id": request.user.pk,
             "per_page": per_page_value(request),
             "extra_query": extra_query(request),
+            "can_manage_all_users": is_school_admin(request.user),
+            "add_title": "បន្ថែមអ្នកប្រើ" if is_school_admin(request.user) else "បន្ថែមគ្រូ",
         },
     )
 
 
-@admin_required
+@users_access_required
 @require_GET
 def user_list(request):
     return _user_list_response(request)
 
 
-@admin_required
+@users_access_required
 @require_http_methods(["GET", "POST"])
 def user_create(request):
-    form = AdminUserForm(request.POST or None)
+    form = AdminUserForm(request.POST or None, actor=request.user)
     if request.method == "POST" and form.is_valid():
         user = form.save()
         log_event(
@@ -165,11 +170,13 @@ def user_create(request):
     )
 
 
-@admin_required
+@users_access_required
 @require_http_methods(["GET", "POST"])
 def user_edit(request, pk):
     account = get_object_or_404(User, pk=pk)
-    form = AdminUserForm(request.POST or None, instance=account)
+    if not can_manage_account(request.user, account):
+        raise PermissionDenied
+    form = AdminUserForm(request.POST or None, instance=account, actor=request.user)
     if request.method == "POST" and form.is_valid():
         if account.pk == request.user.pk:
             form.instance.is_active = True
@@ -198,7 +205,7 @@ def user_edit(request, pk):
     )
 
 
-@admin_required
+@users_access_required
 @require_POST
 def user_deactivate(request, pk):
     account = get_object_or_404(User, pk=pk)

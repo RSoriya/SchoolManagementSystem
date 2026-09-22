@@ -182,6 +182,7 @@ def capability_map(user):
         "mark_scores": user_has_perm(user, "academics.mark_score"),
         "add_assessment": user_has_perm(user, "academics.add_assessment"),
         "manage_users": is_school_admin(user),
+        "add_teacher": is_school_admin(user) or is_cashier(user),
         "view_audit": is_school_admin(user),
         "manage_settings": is_school_admin(user),
     }

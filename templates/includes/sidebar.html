@@ -57,12 +57,12 @@
     </a>
     {% endif %}
 
-    {% if can.manage_users or can.view_audit or can.manage_settings %}
+    {% if can.manage_users or can.add_teacher or can.view_audit or can.manage_settings %}
     <p class="px-3.5 pb-1 pt-5 text-[11px] font-bold uppercase tracking-widest text-slate-400">ប្រព័ន្ធ</p>
-    {% if can.manage_users %}
+    {% if can.manage_users or can.add_teacher %}
     <a href="{% url 'users:list' %}" class="nav-link {% if '/users/' in path %}nav-link-active{% endif %}">
       <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
-      អ្នកប្រើប្រាស់
+      {% if can.manage_users %}អ្នកប្រើប្រាស់{% else %}គ្រូបង្រៀន{% endif %}
     </a>
     {% endif %}
     {% if can.view_audit %}

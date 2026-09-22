@@ -4,7 +4,7 @@ from django.contrib.auth.forms import AuthenticationForm, UsernameField
 from django.core.exceptions import ValidationError
 
 from .models import User
-from .roles import ADMIN_GROUP_NAME, ROLE_CHOICES, assign_role, user_role
+from .roles import ADMIN_GROUP_NAME, ROLE_CHOICES, ROLE_LABELS, TEACHER_GROUP_NAME, assign_role, is_cashier, is_school_admin, user_role
 from .services import can_change_role
 
 INPUT_ATTRS = {"class": "form-input"}
@@ -69,7 +69,8 @@ class AdminUserForm(forms.ModelForm):
             "email": forms.EmailInput(attrs=INPUT_ATTRS),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, actor=None, **kwargs):
+        self.actor = actor
         super().__init__(*args, **kwargs)
         self.fields["role"] = forms.ChoiceField(
             label="តួនាទី",
@@ -78,13 +79,18 @@ class AdminUserForm(forms.ModelForm):
             widget=forms.Select(attrs=INPUT_ATTRS),
         )
         self.fields["full_name_kh"].required = True
+        if self.actor and is_cashier(self.actor) and not is_school_admin(self.actor):
+            self.fields["role"].choices = ((TEACHER_GROUP_NAME, ROLE_LABELS[TEACHER_GROUP_NAME]),)
+            self.fields["role"].initial = TEACHER_GROUP_NAME
         if self.instance.pk:
-            self.fields["role"].initial = user_role(self.instance)
+            if not (self.actor and is_cashier(self.actor) and not is_school_admin(self.actor)):
+                self.fields["role"].initial = user_role(self.instance)
         else:
             self.fields["password1"].required = True
             self.fields["password2"].required = True
             self.fields["is_active"].initial = True
-            self.fields["role"].initial = ADMIN_GROUP_NAME
+            if not self.fields["role"].initial:
+                self.fields["role"].initial = ADMIN_GROUP_NAME
 
     def clean(self):
         cleaned = super().clean()
@@ -101,6 +107,8 @@ class AdminUserForm(forms.ModelForm):
         role = cleaned.get("role") or (
             user_role(self.instance) if self.instance.pk else ADMIN_GROUP_NAME
         )
+        if self.actor and is_cashier(self.actor) and not is_school_admin(self.actor):
+            role = TEACHER_GROUP_NAME
         cleaned["role"] = role
         if self.instance.pk and not can_change_role(self.instance, role):
             self.add_error("role", "មិនអាចដកតួនាទី Admin ចុងក្រោយបានទេ។")
