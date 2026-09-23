@@ -1,4 +1,24 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const passwordCopy = document.documentElement.lang === "en"
+    ? { show: "Show password", hide: "Hide password" }
+    : { show: "បង្ហាញពាក្យសម្ងាត់", hide: "លាក់ពាក្យសម្ងាត់" };
+
+  const setPasswordVisible = (input, button, visible) => {
+    input.type = visible ? "text" : "password";
+    button.setAttribute("aria-pressed", visible ? "true" : "false");
+    button.setAttribute("aria-label", visible ? passwordCopy.hide : passwordCopy.show);
+    button.querySelector('[data-password-icon="show"]')?.classList.toggle("hidden", visible);
+    button.querySelector('[data-password-icon="hide"]')?.classList.toggle("hidden", !visible);
+  };
+
+  document.querySelectorAll("[data-password-toggle]").forEach((button) => {
+    const input = button.closest(".password-field")?.querySelector("input");
+    if (!input) return;
+    button.addEventListener("click", () => {
+      setPasswordVisible(input, button, input.type === "password");
+    });
+  });
+
   const initCombobox = (select) => {
     if (select.closest("[data-combobox-root]")) return;
     const wrap = document.createElement("div");

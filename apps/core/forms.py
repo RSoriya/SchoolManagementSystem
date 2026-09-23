@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from .models import PaymentMethod, SchoolSettings
+from .widgets import PasswordToggleInput
 
 
 INPUT_ATTRS = {"class": "form-input"}
@@ -50,7 +51,7 @@ class SchoolSettingsForm(forms.ModelForm):
     telegram_bot_token = forms.CharField(
         label="Telegram Bot Token",
         required=False,
-        widget=forms.PasswordInput(
+        widget=PasswordToggleInput(
             attrs={
                 **INPUT_ATTRS,
                 "placeholder": "ទុកចោលដើម្បីរក្សាទុកតម្លៃចាស់",

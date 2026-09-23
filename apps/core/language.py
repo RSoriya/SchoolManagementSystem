@@ -22,6 +22,8 @@ EN = {
     "ចងចាំខ្ញុំ": "Remember me",
     "បញ្ចូលឈ្មោះអ្នកប្រើប្រាស់": "Enter username",
     "បញ្ចូលពាក្យសម្ងាត់": "Enter password",
+    "បង្ហាញពាក្យសម្ងាត់": "Show password",
+    "លាក់ពាក្យសម្ងាត់": "Hide password",
     "បញ្ចូលព័ត៌មានគណនីរបស់អ្នក ដើម្បីបន្តទៅកាន់ផ្ទាំងគ្រប់គ្រង។": "Enter your account details to continue to the dashboard.",
     "ប្រសិនបើអ្នកមិនអាចចូលបាន សូមទាក់ទងអ្នកគ្រប់គ្រងប្រព័ន្ធ។": "If you cannot sign in, contact the system administrator.",
     "ឈ្មោះអ្នកប្រើប្រាស់ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ។": "Username or password is incorrect.",

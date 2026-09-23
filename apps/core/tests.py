@@ -97,6 +97,7 @@ class BackupTests(TestCase):
         self.assertContains(response, "ព័ត៌មានសាលា")
         self.assertContains(response, "វិធីបង់ប្រាក់")
         self.assertContains(response, "Telegram")
+        self.assertContains(response, "data-password-toggle")
         self.assertContains(response, "data-add-open")
         self.assertContains(response, "កែ")
         self.assertContains(response, "លុប")

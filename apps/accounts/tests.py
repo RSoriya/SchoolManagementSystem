@@ -21,6 +21,8 @@ class LoginTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "ចងចាំខ្ញុំ")
         self.assertContains(response, "remember_me")
+        self.assertContains(response, "data-password-toggle")
+        self.assertContains(response, "js/app.js")
 
     def test_remember_me_keeps_username_after_logout(self):
         self.client.post(
@@ -163,6 +165,7 @@ class UserAdminTests(TestCase):
         self.assertContains(response, "ល.រ")
         self.assertContains(response, "បន្ថែមអ្នកប្រើ")
         self.assertContains(response, "admin")
+        self.assertContains(response, "data-password-toggle")
 
     def test_create_user_assigns_admin_group(self):
         response = self.client.post(

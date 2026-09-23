@@ -3,6 +3,8 @@ from django.contrib.auth import password_validation
 from django.contrib.auth.forms import AuthenticationForm, UsernameField
 from django.core.exceptions import ValidationError
 
+from apps.core.widgets import PasswordToggleInput
+
 from .models import User
 from .roles import ADMIN_GROUP_NAME, ROLE_CHOICES, ROLE_LABELS, TEACHER_GROUP_NAME, assign_role, is_cashier, is_school_admin, user_role
 from .services import can_change_role
@@ -25,7 +27,7 @@ class AdminAuthenticationForm(AuthenticationForm):
     password = forms.CharField(
         label="ពាក្យសម្ងាត់",
         strip=False,
-        widget=forms.PasswordInput(
+        widget=PasswordToggleInput(
             attrs={
                 "class": "form-input",
                 "placeholder": "បញ្ចូលពាក្យសម្ងាត់",
@@ -50,13 +52,13 @@ class AdminUserForm(forms.ModelForm):
         label="ពាក្យសម្ងាត់",
         required=False,
         strip=False,
-        widget=forms.PasswordInput(attrs={**INPUT_ATTRS, "autocomplete": "new-password"}),
+        widget=PasswordToggleInput(attrs={**INPUT_ATTRS, "autocomplete": "new-password"}),
     )
     password2 = forms.CharField(
         label="បញ្ជាក់ពាក្យសម្ងាត់",
         required=False,
         strip=False,
-        widget=forms.PasswordInput(attrs={**INPUT_ATTRS, "autocomplete": "new-password"}),
+        widget=PasswordToggleInput(attrs={**INPUT_ATTRS, "autocomplete": "new-password"}),
     )
 
     class Meta:
