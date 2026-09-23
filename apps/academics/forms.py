@@ -156,15 +156,25 @@ class TransferEnrollmentForm(forms.Form):
         widget=forms.TextInput(attrs=INPUT_ATTRS),
     )
 
-    def __init__(self, *args, enrollment=None, **kwargs):
+    def __init__(self, *args, enrollment=None, student=None, **kwargs):
         super().__init__(*args, **kwargs)
-        taken_ids = Enrollment.objects.filter(
-            student=enrollment.student,
-            status=Enrollment.Status.ACTIVE,
-        ).values_list("course_class_id", flat=True)
+        student = student or getattr(enrollment, "student", None)
+        exclude_ids = []
+        if student:
+            exclude_ids = list(
+                Enrollment.objects.filter(
+                    student=student,
+                    status=Enrollment.Status.ACTIVE,
+                ).values_list("course_class_id", flat=True)
+            )
+        if enrollment:
+            exclude_ids.append(enrollment.course_class_id)
         self.fields["course_class"].queryset = (
             CourseClass.objects.filter(is_active=True)
-            .exclude(pk__in=list(taken_ids) + [enrollment.course_class_id])
+            .exclude(pk__in=exclude_ids)
             .select_related("course")
             .order_by("name")
+        )
+        self.fields["course_class"].label_from_instance = lambda obj: (
+            f"{obj.name} · {obj.course.name}" if obj.course_id else obj.name
         )

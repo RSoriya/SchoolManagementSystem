@@ -107,11 +107,15 @@ def student_detail(request, student_id):
     visible_class_qs = visible_classes(request.user)
     can_view_attendance = user_has_perm(request.user, "academics.view_attendancerecord")
     can_view_scores = user_has_perm(request.user, "academics.view_scorerecord")
+    transfer_form = None
+    if user_has_perm(request.user, "academics.change_enrollment_status"):
+        transfer_form = TransferEnrollmentForm(student=student)
     context = {
         "page_title": student.display_name,
         "student": student,
         "enrollments": attach_period_balances(enrollments),
         "active_enrollments": enrollments.filter(status=Enrollment.Status.ACTIVE),
+        "transfer_form": transfer_form,
         "payments": payments,
         "can_pay": enrollments.filter(status__in=PAYABLE_STATUSES).exists(),
         "attendance_records": (

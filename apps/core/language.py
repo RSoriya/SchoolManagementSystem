@@ -344,6 +344,12 @@ EN = {
     "បានលុបសិស្ស។": "Student deleted.",
     "មិនអាចលុបសិស្សដែលមានប្រវត្តិចុះឈ្មោះ។": "Cannot delete a student with enrollment history.",
     "បានផ្ទេរថ្នាក់។ ប្រវត្តិចាស់នៅតែរក្សាទុក។": "Class transferred. The previous record was kept.",
+    "ផ្ទេរថ្នាក់": "Transfer class",
+    "ផ្ទេរពី": "Transfer from",
+    "បន្តរៀន": "Resume class",
+    "តើអ្នកពិតជាចង់បន្តរៀនក្នុងថ្នាក់នេះមែនទេ?": "Do you really want to resume this class?",
+    "តើអ្នកពិតជាចង់បោះបង់ការសិក្សាក្នុងថ្នាក់នេះមែនទេ?": "Do you really want to drop this class?",
+    "បោះបង់ការសិក្សា": "Drop enrollment",
     "បានប្ដូរស្ថានភាពការសិក្សា។": "Enrollment status updated.",
     "សកម្មភាពមិនត្រឹមត្រូវ។": "That action is not valid.",
     "បានបង្កើតវគ្គសិក្សា។": "Course created.",
@@ -407,6 +413,9 @@ _ATTRS = {
     "data-edit-title",
     "data-form-title",
     "data-combobox-placeholder",
+    "data-status-title",
+    "data-status-message",
+    "data-status-submit",
 }
 
 _SKIP_TAGS = {"script", "style", "code", "pre", "textarea"}

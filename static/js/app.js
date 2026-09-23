@@ -366,4 +366,48 @@ document.addEventListener("DOMContentLoaded", () => {
       root.querySelector(`[data-edit-id="${editId}"]`)?.click();
     }
   });
+
+  document.querySelectorAll("[data-enrollment-modals]").forEach((root) => {
+    const transferModal = root.querySelector('[data-modal="transfer-modal"]');
+    const transferForm = root.querySelector("[data-transfer-form]");
+    const transferFrom = root.querySelector("[data-transfer-from]");
+    const statusModal = root.querySelector('[data-modal="status-modal"]');
+    const statusForm = root.querySelector("[data-status-form]");
+    const statusTitle = root.querySelector("[data-status-title]");
+    const statusMessage = root.querySelector("[data-status-message]");
+    const statusName = root.querySelector("[data-status-name]");
+    const statusSubmit = root.querySelector("[data-status-submit]");
+
+    root.querySelectorAll("[data-transfer-url]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!transferForm) return;
+        transferForm.reset();
+        transferForm.action = button.dataset.transferUrl;
+        if (transferFrom) transferFrom.textContent = button.dataset.className || "";
+        openModal(transferModal);
+      });
+    });
+
+    root.querySelectorAll("[data-status-url]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!statusForm) return;
+        statusForm.action = button.dataset.statusUrl;
+        if (statusTitle) statusTitle.textContent = button.dataset.statusTitle || "";
+        if (statusMessage) statusMessage.textContent = button.dataset.statusMessage || "";
+        if (statusName) statusName.textContent = button.dataset.className || "";
+        if (statusSubmit) {
+          statusSubmit.textContent = button.dataset.statusSubmit || "";
+          statusSubmit.className = button.dataset.statusDanger === "1"
+            ? "btn-danger px-4 py-2.5 text-base"
+            : "btn-primary px-4 py-2.5 text-base";
+        }
+        openModal(statusModal);
+      });
+    });
+
+    const transferId = new URLSearchParams(window.location.search).get("transfer");
+    if (transferId) {
+      root.querySelector(`[data-transfer-url$="/${transferId}/transfer/"]`)?.click();
+    }
+  });
 });

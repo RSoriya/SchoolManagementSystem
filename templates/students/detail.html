@@ -30,6 +30,7 @@
     </dl>
   </section>
 
+  <div data-enrollment-modals>
   <section class="panel mt-6 overflow-hidden">
     <div class="border-b border-slate-100 px-5 py-4">
       <h3 class="font-bold text-slate-900">ប្រវត្តិចុះឈ្មោះ</h3>
@@ -74,19 +75,10 @@
                     <a href="{% url 'billing:payment_list' %}?open=add&enrollment={{ enrollment.pk }}" class="btn-quiet">ទទួលបង់</a>
                     {% endif %}
                     {% if can.change_enrollment %}
-                    <a href="{% url 'students:transfer' student.student_id enrollment.pk %}" class="btn-quiet">ផ្ទេរ</a>
-                    <form method="post" action="{% url 'students:change_status' student.student_id enrollment.pk 'suspend' %}" onsubmit="return confirm('ផ្អាកការសិក្សានេះ?');">
-                      {% csrf_token %}
-                      <button class="btn-quiet" type="submit">ផ្អាក</button>
-                    </form>
-                    <form method="post" action="{% url 'students:change_status' student.student_id enrollment.pk 'complete' %}" onsubmit="return confirm('បញ្ចប់ការសិក្សានេះ?');">
-                      {% csrf_token %}
-                      <button class="btn-quiet" type="submit">បញ្ចប់</button>
-                    </form>
-                    <form method="post" action="{% url 'students:change_status' student.student_id enrollment.pk 'drop' %}" onsubmit="return confirm('បោះបង់ការសិក្សានេះ? ប្រវត្តិនឹងនៅតែរក្សាទុក។');">
-                      {% csrf_token %}
-                      <button class="btn-danger" type="submit">បោះបង់</button>
-                    </form>
+                    <button type="button" class="btn-quiet" data-transfer-url="{% url 'students:transfer' student.student_id enrollment.pk %}" data-class-name="{{ enrollment.course_class.name }}">ផ្ទេរ</button>
+                    <button type="button" class="btn-quiet" data-status-url="{% url 'students:change_status' student.student_id enrollment.pk 'suspend' %}" data-status-title="ផ្អាក" data-status-message="ផ្អាកការសិក្សានេះ?" data-status-submit="ផ្អាក" data-class-name="{{ enrollment.course_class.name }}">ផ្អាក</button>
+                    <button type="button" class="btn-quiet" data-status-url="{% url 'students:change_status' student.student_id enrollment.pk 'complete' %}" data-status-title="បញ្ចប់" data-status-message="បញ្ចប់ការសិក្សានេះ?" data-status-submit="បញ្ចប់" data-class-name="{{ enrollment.course_class.name }}">បញ្ចប់</button>
+                    <button type="button" class="btn-danger" data-status-url="{% url 'students:change_status' student.student_id enrollment.pk 'drop' %}" data-status-title="បោះបង់" data-status-message="បោះបង់ការសិក្សានេះ? ប្រវត្តិនឹងនៅតែរក្សាទុក។" data-status-submit="បោះបង់" data-status-danger="1" data-class-name="{{ enrollment.course_class.name }}">បោះបង់</button>
                     {% endif %}
                   </div>
                 {% elif enrollment.status == "suspended" %}
@@ -95,14 +87,8 @@
                     <a href="{% url 'billing:payment_list' %}?open=add&enrollment={{ enrollment.pk }}" class="btn-quiet">ទទួលបង់</a>
                     {% endif %}
                     {% if can.change_enrollment %}
-                    <form method="post" action="{% url 'students:change_status' student.student_id enrollment.pk 'resume' %}">
-                      {% csrf_token %}
-                      <button class="btn-quiet" type="submit">បន្តរៀន</button>
-                    </form>
-                    <form method="post" action="{% url 'students:change_status' student.student_id enrollment.pk 'drop' %}" onsubmit="return confirm('បោះបង់ការសិក្សានេះ?');">
-                      {% csrf_token %}
-                      <button class="btn-danger" type="submit">បោះបង់</button>
-                    </form>
+                    <button type="button" class="btn-quiet" data-status-url="{% url 'students:change_status' student.student_id enrollment.pk 'resume' %}" data-status-title="បន្តរៀន" data-status-message="តើអ្នកពិតជាចង់បន្តរៀនក្នុងថ្នាក់នេះមែនទេ?" data-status-submit="បន្តរៀន" data-class-name="{{ enrollment.course_class.name }}">បន្តរៀន</button>
+                    <button type="button" class="btn-danger" data-status-url="{% url 'students:change_status' student.student_id enrollment.pk 'drop' %}" data-status-title="បោះបង់ការសិក្សា" data-status-message="តើអ្នកពិតជាចង់បោះបង់ការសិក្សាក្នុងថ្នាក់នេះមែនទេ?" data-status-submit="បោះបង់" data-status-danger="1" data-class-name="{{ enrollment.course_class.name }}">បោះបង់</button>
                     {% endif %}
                   </div>
                 {% endif %}
@@ -117,6 +103,53 @@
       </table>
     </div>
   </section>
+
+
+  {% if can.change_enrollment %}
+    {% if transfer_form %}
+    <div data-modal="transfer-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-md">
+        <div class="mb-5 flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900">ផ្ទេរថ្នាក់</h2>
+            <p class="mt-1 text-sm text-slate-500">ផ្ទេរពី <strong data-transfer-from></strong>. ការចុះឈ្មោះចាស់នឹងប្ដូរទៅស្ថានភាព «ផ្ទេរ» ហើយរក្សាទុកក្នុងប្រវត្តិ។</p>
+          </div>
+          <button type="button" class="btn-quiet" data-modal-close aria-label="បោះបង់">&#215;</button>
+        </div>
+        <form method="post" class="space-y-4" data-transfer-form>
+          {% csrf_token %}
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ transfer_form.course_class.id_for_label }}">{{ transfer_form.course_class.label }}</label>
+            {{ transfer_form.course_class }}
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700" for="{{ transfer_form.note.id_for_label }}">{{ transfer_form.note.label }}</label>
+            {{ transfer_form.note }}
+          </div>
+          <div class="flex justify-end gap-3 pt-2">
+            <button type="submit" class="btn-primary">ផ្ទេរថ្នាក់</button>
+            <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+    <div data-modal="status-modal" class="modal-overlay" role="dialog" aria-modal="true">
+      <div class="modal-backdrop" data-modal-close></div>
+      <div class="modal-panel modal-panel-md text-center">
+        <h2 class="text-xl font-bold text-slate-900" data-status-title>ផ្អាក</h2>
+        <p class="mt-3 text-slate-600"><span data-status-message></span> <strong data-status-name></strong></p>
+        <p class="mt-2 text-sm text-slate-500">ប្រវត្តិនឹងនៅតែរក្សាទុក។</p>
+        <form method="post" class="mt-6 flex justify-center gap-3" data-status-form>
+          {% csrf_token %}
+          <button type="submit" class="btn-primary px-4 py-2.5 text-base" data-status-submit>ផ្អាក</button>
+          <button type="button" class="btn-secondary" data-modal-close>បោះបង់</button>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+  </div>
 
   {% if can.view_attendance %}
   <section class="panel mt-6 overflow-hidden">

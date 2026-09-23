@@ -97,12 +97,31 @@ class StudentAndEnrollmentTests(TestCase):
         self.assertContains(page, "ព័ត៌មានទំនាក់ទំនង")
         self.assertContains(page, "ប្រវត្តិចុះឈ្មោះ")
         self.assertNotContains(page, "ចុះឈ្មោះថ្នាក់ថ្មី")
+        self.assertContains(page, "data-enrollment-modals")
         blocked = self.client.post(
             f"{student.get_absolute_url()}enroll/",
             {"course_class": self.class_morning.pk},
         )
         self.assertEqual(blocked.status_code, 404)
         self.assertFalse(Enrollment.objects.filter(student=student).exists())
+
+    def test_student_detail_enrollment_actions_use_popups(self):
+        self.client.force_login(self.user)
+        student = Student.objects.create(
+            name_kh="សុខា",
+            name_en="Sokha",
+            gender=Student.Gender.MALE,
+            phone="012345678",
+        )
+        enrollment = enroll_student(student, self.class_morning, user=self.user)
+        page = self.client.get(student.get_absolute_url())
+        self.assertContains(page, "data-enrollment-modals")
+        self.assertContains(page, 'data-modal="transfer-modal"')
+        self.assertContains(page, 'data-modal="status-modal"')
+        self.assertContains(page, f'data-transfer-url="{reverse("students:transfer", args=[student.student_id, enrollment.pk])}"')
+        self.assertContains(page, "data-status-url")
+        self.assertNotContains(page, "return confirm(")
+        self.assertNotContains(page, f'href="{reverse("students:transfer", args=[student.student_id, enrollment.pk])}"')
 
     def test_student_can_enroll_in_multiple_classes(self):
         student = Student.objects.create(
